@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>HomeVault</title>
+        <link rel="stylesheet" href="/static/css/style.css" />
+    </head>
+    <body>
+        <div class="container">
+            <h1>Welcome to HomeVault</h1>
+            <p>Your personal files storage system</p>
+
+            <h2>Upload a File</h2>
+            <div class="upload-form">
+                <form action="/upload" method="POST" enctype="multipart/form-data">
+                    <input type="file" name="file" />
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                </form>
+            </div>
+
+            <h2>Search Files</h2>
+            <div class="upload-form">
+                <form action="/" method="GET">
+                    <input type="text" name="search"
+                           value="{{ query }}"
+                           placeholder="Search by filename..."
+                           style="padding: 8px; width: 300px; margin-right: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                    <button type="submit" class="btn btn-primary">Search</button>
+                    {% if query %}
+                        <a href="/" class="btn btn-primary">Clear</a>
+                    {% endif %}
+                </form>
+            </div>
+
+            <div class="filter-buttons">
+                <a href="/" class="btn {% if not folder and not query %}btn-active{% else %}btn-primary{% endif %}">
+                    All
+                </a>
+                <a href="/?folder=Photos" class="btn {% if folder == 'Photos' %}btn-active{% else %}btn-primary{% endif %}">
+                    Photos
+                </a>
+                <a href="/?folder=Videos" class="btn {% if folder == 'Videos' %}btn-active{% else %}btn-primary{% endif %}">
+                    Videos
+                </a>
+                <a href="/?folder=Documents" class="btn {% if folder == 'Documents' %}btn-active{% else %}btn-primary{% endif %}">
+                    Documents
+                </a>
+                <a href="/?folder=Others" class="btn {% if folder == 'Others' %}btn-active{% else %}btn-primary{% endif %}">
+                    Others
+                </a>
+            </div>
+
+            {% if query %}
+                <h2>Search results for "{{ query }}" ({{ files|length }} found)</h2>
+            {% elif folder %}
+                <h2>{{ folder }} ({{ files|length }})</h2>
+            {% else %}
+                <h2>Your Files ({{ files|length }})</h2>
+            {% endif %}
+
+            {% if files %}
+            <table class="files-table">
+                <tr>
+                    <th>Preview</th>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Size</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                </tr>
+
+                {% for file in files %}
+                <tr>
+                    <td>
+                        {% if file['file_type'] == 'Photos' %}
+                            <img src="/static/thumbnails/{{ file['id'] }}.jpg"
+                                 width="60" height="60"
+                                 style="object-fit: cover; border-radius: 4px;">
+                        {% else %}
+                            <div style="width: 60px; height: 60px; background: #eee;
+                                        border-radius: 4px; display: flex; align-items: center;
+                                        justify-content: center; font-size: 24px;">
+                                {% if file['file_type'] == 'Videos' %}🎬
+                                {% elif file['file_type'] == 'Documents' %}📄
+                                {% else %}📁
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </td>
+                    <td>{{ file['original_name'] }}</td>
+                    <td>{{ file['file_type'] }}</td>
+                    <td>{{ format_size(file['file_size']) }}</td>
+                    <td>{{ file['upload_date'] }}</td>
+                    <td>
+                        <a href="/download/{{ file['id'] }}" class="btn btn-primary">Download</a>
+                        <a href="/delete/{{ file['id'] }}" class="btn btn-danger"
+                           onclick="return confirm('Are you sure you want to delete this file?')">Delete</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% else %}
+            <div class="empty-message">
+                <p>
+                    {% if query %}
+                        No files found matching "{{ query }}"
+                    {% else %}
+                        No Files Uploaded Yet. Upload Your First File Above
+                    {% endif %}
+                </p>
+            </div>
+            {% endif %}
+        </div>
+    </body>
+</html>

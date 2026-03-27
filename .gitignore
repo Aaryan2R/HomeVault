@@ -1,0 +1,13 @@
+﻿venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+.env
+.python-version
+static/thumbnails/
+storage/
+CHEAT_SHEET.txt
+PROJECT_CONTEXT.txt
+VIVA_NOTES.txt
