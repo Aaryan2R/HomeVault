@@ -14,7 +14,7 @@
             <h2>Upload a File</h2>
             <div class="upload-form">
                 <form action="/upload" method="POST" enctype="multipart/form-data">
-                    <input type="file" name="file" />
+                    <input type="file" name="file" multiple />
                     <button type="submit" class="btn btn-primary">Upload</button>
                 </form>
             </div>
@@ -49,6 +49,7 @@
                 <a href="/?folder=Others" class="btn {% if folder == 'Others' %}btn-active{% else %}btn-primary{% endif %}">
                     Others
                 </a>
+                <a href="/trash" class="btn btn-danger">Trash</a>
             </div>
 
             {% if query %}

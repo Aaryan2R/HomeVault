@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>HomeVault - Trash</title>
+        <link rel="stylesheet" href="/static/css/style.css" />
+    </head>
+    <body>
+        <div class="container">
+            <h1>HomeVault</h1>
+            <p>Your personal file storage system</p>
+
+            <div class="filter-buttons" style="margin-top: 20px;">
+                <a href="/" class="btn btn-primary">Back to Files</a>
+            </div>
+
+            <h2>Trash ({{ files|length }})</h2>
+            <p style="color: #888; margin-bottom: 15px; font-size: 14px;">
+                Files in trash can be restored or permanently deleted.
+            </p>
+
+            {% if files %}
+            <table class="files-table">
+                <tr>
+                    <th>Preview</th>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Size</th>
+                    <th>Deleted On</th>
+                    <th>Action</th>
+                </tr>
+
+                {% for file in files %}
+                <tr>
+                    <td>
+                        {% if file['file_type'] == 'Photos' %}
+                            <img src="/static/thumbnails/{{ file['id'] }}.jpg"
+                                 width="60" height="60"
+                                 style="object-fit: cover; border-radius: 4px; opacity: 0.5;">
+                        {% else %}
+                            <div style="width: 60px; height: 60px; background: #eee;
+                                        border-radius: 4px; display: flex; align-items: center;
+                                        justify-content: center; font-size: 24px; opacity: 0.5;">
+                                {% if file['file_type'] == 'Videos' %}
+                                {% elif file['file_type'] == 'Documents' %}
+                                {% else %}
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </td>
+                    <td>{{ file['original_name'] }}</td>
+                    <td>{{ file['file_type'] }}</td>
+                    <td>{{ format_size(file['file_size']) }}</td>
+                    <td>{{ file['deleted_at'] }}</td>
+                    <td>
+                        <a href="/restore/{{ file['id'] }}" class="btn btn-primary">Restore</a>
+                        <a href="/permanent_delete/{{ file['id'] }}" class="btn btn-danger"
+                           onclick="return confirm('This will permanently delete the file. Are you sure?')">
+                            Delete Forever
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% else %}
+            <div class="empty-message">
+                <p>Trash is empty.</p>
+            </div>
+            {% endif %}
+        </div>
+    </body>
+</html>
