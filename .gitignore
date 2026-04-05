@@ -1,13 +1,26 @@
-﻿venv/
+﻿# Python
+venv/
 __pycache__/
 *.pyc
-*.pyo
-*.pyd
-*.db
-.env
-.python-version
+
+# Database (has real user data, never push)
+homevault.db
+
+# Log files
+*.log
+server.out.log
+server.err.log
+
+# Playwright test artifacts
+.playwright-cli/
+
+# Storage folders (user uploaded files, don't push)
+storage/Photos/
+storage/Videos/
+storage/Documents/
+storage/Others/
 static/thumbnails/
-storage/
-CHEAT_SHEET.txt
-PROJECT_CONTEXT.txt
-VIVA_NOTES.txt
+
+# Windows
+Thumbs.db
+desktop.ini
