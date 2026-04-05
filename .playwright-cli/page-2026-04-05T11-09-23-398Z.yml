@@ -1,0 +1,13 @@
+- generic [ref=e2]:
+  - heading "HomeVault" [level=1] [ref=e3]
+  - paragraph [ref=e4]: Your personal file storage system
+  - generic [ref=e5]:
+    - heading "Login" [level=2] [ref=e6]
+    - generic [ref=e7]:
+      - generic [ref=e8]:
+        - generic [ref=e9]: Username
+        - textbox [active] [ref=e10]
+      - generic [ref=e11]:
+        - generic [ref=e12]: Password
+        - textbox [ref=e13]
+      - button "Login" [ref=e14] [cursor=pointer]

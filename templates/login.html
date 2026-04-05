@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>HomeVault - Login</title>
+        <link rel="stylesheet" href="/static/css/style.css" />
+    </head>
+    <body>
+        <div class="auth-container">
+            <h1>HomeVault</h1>
+            <p>Your personal file storage system</p>
+
+            <div class="auth-box">
+                <h2>Login</h2>
+
+                {% if error %}
+                    <div class="error-message">{{ error }}</div>
+                {% endif %}
+
+                <form action="/login" method="POST">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" name="username" required autofocus />
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" name="password" required />
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Login</button>
+                </form>
+            </div>
+        </div>
+    </body>
+</html>
