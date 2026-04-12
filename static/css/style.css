@@ -1,199 +1,1579 @@
+/* ═══════════════════════════════════════════════════════════
+   HomeVault — Design System
+   A modern cloud storage dashboard with professional dark mode.
+
+   HOW THIS WORKS:
+   We use CSS "custom properties" (variables) like --bg-primary.
+   In light mode, --bg-primary is a light gray.
+   In dark mode, --bg-primary becomes a dark navy-blue.
+   Every element uses these variables, so switching themes
+   automatically updates the entire page — no need to write
+   separate styles for each mode.
+   ═══════════════════════════════════════════════════════════ */
+
+
+/* ─── 1. Theme Variables ──────────────────────────────────── */
+
+:root {
+    /* Light mode colors (default) */
+    --bg-primary:    #f0f4f8;
+    --bg-card:       #ffffff;
+    --bg-hover:      #f8fafc;
+    --sidebar-bg:    #1e3a5f;
+    --sidebar-hover: #2a4a72;
+    --sidebar-active:#3b5998;
+    --sidebar-text:  #cbd5e1;
+    --sidebar-icon:  #94a3b8;
+    --text-primary:  #1a1a2e;
+    --text-secondary:#64748b;
+    --text-muted:    #94a3b8;
+    --border-color:  #e2e8f0;
+    --accent:        #2563eb;
+    --accent-hover:  #1d4ed8;
+    --accent-light:  #dbeafe;
+    --danger:        #dc2626;
+    --danger-hover:  #b91c1c;
+    --success:       #16a34a;
+    --shadow:        0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+    --shadow-lg:     0 4px 12px rgba(0, 0, 0, 0.1);
+
+    /* Category colors */
+    --cat-photos:    #2563eb;
+    --cat-documents: #ec4899;
+    --cat-videos:    #f97316;
+    --cat-others:    #10b981;
+
+    --sidebar-width: 240px;
+    --right-panel-width: 280px;
+}
+
+/* Dark mode — activated when JS adds data-theme="dark" to <html> */
+[data-theme="dark"] {
+    --bg-primary:    #0f172a;
+    --bg-card:       #1e293b;
+    --bg-hover:      #253449;
+    --sidebar-bg:    #0f172a;
+    --sidebar-hover: #1e293b;
+    --sidebar-active:#2563eb;
+    --sidebar-text:  #94a3b8;
+    --sidebar-icon:  #64748b;
+    --text-primary:  #e2e8f0;
+    --text-secondary:#94a3b8;
+    --text-muted:    #64748b;
+    --border-color:  #334155;
+    --accent:        #3b82f6;
+    --accent-hover:  #2563eb;
+    --accent-light:  #1e3a5f;
+    --danger:        #ef4444;
+    --danger-hover:  #dc2626;
+    --success:       #22c55e;
+    --shadow:        0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-lg:     0 4px 12px rgba(0, 0, 0, 0.4);
+
+    --cat-photos:    #3b82f6;
+    --cat-documents: #f472b6;
+    --cat-videos:    #fb923c;
+    --cat-others:    #34d399;
+}
+
+
+/* ─── 2. Reset & Base ─────────────────────────────────────── */
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
+/* Import Inter font from Google — clean modern font used by many pro apps */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f0f2f5;
-    color: #333;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.5;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.container {
-    max-width: 900px;
-    margin: 30px auto;
-    padding: 0 20px;
+a {
+    text-decoration: none;
+    color: inherit;
 }
 
-h1 {
-    color: #1a237e;
-    margin-bottom: 5px;
+
+/* ─── 3. App Layout ───────────────────────────────────────── */
+/*
+   The main layout is a flexbox row with 3 columns:
+   [Sidebar] [Main Content] [Right Panel]
+   On mobile, sidebar becomes an overlay and right panel stacks below.
+*/
+
+.app-layout {
+    display: flex;
+    min-height: 100vh;
 }
 
-h2 {
-    color: #333;
-    margin: 25px 0 15px 0;
+
+/* ─── 4. Sidebar ──────────────────────────────────────────── */
+
+.sidebar {
+    width: var(--sidebar-width);
+    background: var(--sidebar-bg);
+    color: var(--sidebar-text);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 100;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .sidebar {
+    border-right: 1px solid var(--border-color);
+}
+
+.sidebar-header {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.sidebar-brand .brand-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--accent);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 18px;
+    color: white;
 }
 
-/* Upload form */
-.upload-form {
-    background: white;
-    padding: 20px;
+.sidebar-brand h1 {
+    font-size: 20px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: -0.3px;
+}
+
+.sidebar-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+}
+
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--accent), #7c3aed);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.user-info .user-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+}
+
+.user-info .user-role {
+    font-size: 12px;
+    color: var(--sidebar-icon);
+    text-transform: capitalize;
+}
+
+/* Navigation links in sidebar */
+.sidebar-nav {
+    flex: 1;
+    padding: 16px 12px;
+    overflow-y: auto;
+}
+
+.nav-section-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--sidebar-icon);
+    padding: 8px 12px 6px;
+    margin-top: 8px;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--sidebar-text);
+    transition: all 0.2s ease;
+    cursor: pointer;
+    margin-bottom: 2px;
 }
 
-.upload-form input[type="file"] {
-    margin-right: 10px;
+.nav-link:hover {
+    background: var(--sidebar-hover);
+    color: white;
 }
+
+.nav-link.active {
+    background: var(--sidebar-active);
+    color: white;
+}
+
+.nav-link .nav-icon {
+    font-size: 18px;
+    width: 24px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* Sidebar footer with dark mode toggle and logout */
+.sidebar-footer {
+    padding: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+
+/* ─── 5. Dark Mode Toggle ─────────────────────────────────── */
+
+.theme-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    color: var(--sidebar-text);
+    margin-bottom: 8px;
+}
+
+.theme-toggle .toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* The actual toggle switch — a styled checkbox */
+.toggle-switch {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    flex-shrink: 0;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.2);
+    transition: 0.3s;
+    border-radius: 24px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background-color: var(--accent);
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(20px);
+}
+
+
+/* ─── 6. Main Content Area ────────────────────────────────── */
+
+.main-content {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    padding: 28px 32px;
+    min-height: 100vh;
+    transition: margin-left 0.3s ease;
+}
+
+/* Search bar at the top */
+.search-bar {
+    position: relative;
+    margin-bottom: 28px;
+}
+
+.search-bar form {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.search-input-wrapper {
+    flex: 1;
+    position: relative;
+    max-width: 500px;
+}
+
+.search-input-wrapper .search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 16px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 10px 14px 10px 42px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    transition: border-color 0.2s, box-shadow 0.2s, background-color 0.3s;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.search-input::placeholder {
+    color: var(--text-muted);
+}
+
+
+/* ─── 7. View Tabs (My Files / Shared / All Files) ────────── */
+
+.view-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 24px;
+    background: var(--bg-card);
+    padding: 4px;
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    width: fit-content;
+}
+
+.view-tab {
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.view-tab:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+}
+
+.view-tab.active {
+    background: var(--accent);
+    color: white;
+}
+
+
+/* ─── 8. Category Cards ───────────────────────────────────── */
+
+.section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+}
+
+.categories-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.category-card {
+    padding: 20px;
+    border-radius: 14px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.category-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* Each category gets its own gradient color */
+.category-card.photos    { background: linear-gradient(135deg, #2563eb, #3b82f6); }
+.category-card.documents { background: linear-gradient(135deg, #db2777, #ec4899); }
+.category-card.videos    { background: linear-gradient(135deg, #ea580c, #f97316); }
+.category-card.others    { background: linear-gradient(135deg, #059669, #10b981); }
+
+.category-card .cat-icon {
+    font-size: 28px;
+    margin-bottom: 12px;
+    display: block;
+}
+
+.category-card .cat-name {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.category-card .cat-count {
+    font-size: 13px;
+    opacity: 0.85;
+}
+
+/* Decorative circle in background of card */
+.category-card::after {
+    content: '';
+    position: absolute;
+    top: -20px;
+    right: -20px;
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+}
+
+
+/* ─── 9. File List ────────────────────────────────────────── */
+
+.file-list {
+    background: var(--bg-card);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    transition: background-color 0.3s ease;
+}
+
+.file-list-header {
+    display: grid;
+    grid-template-columns: 48px 1fr 100px 90px 80px 60px;
+    padding: 12px 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.file-row {
+    display: grid;
+    grid-template-columns: 48px 1fr 100px 90px 80px 60px;
+    padding: 12px 20px;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.15s ease;
+}
+
+.file-row:last-child {
+    border-bottom: none;
+}
+
+.file-row:hover {
+    background: var(--bg-hover);
+}
+
+/* File icon — small colored square with rounded corners */
+.file-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: white;
+    flex-shrink: 0;
+}
+
+.file-icon.photos    { background: var(--cat-photos); }
+.file-icon.documents { background: var(--cat-documents); }
+.file-icon.videos    { background: var(--cat-videos); }
+.file-icon.others    { background: var(--cat-others); }
+
+.file-icon img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.file-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-right: 12px;
+}
+
+.file-meta {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+/* Share status indicator */
+.share-badge {
+    font-size: 13px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 500;
+    display: inline-block;
+    text-align: center;
+}
+
+.share-badge.shared {
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--accent);
+}
+
+.share-badge.private {
+    background: rgba(100, 116, 139, 0.1);
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .share-badge.shared {
+    background: rgba(59, 130, 246, 0.15);
+}
+
+[data-theme="dark"] .share-badge.private {
+    background: rgba(100, 116, 139, 0.15);
+}
+
+
+/* ─── 10. Three-Dot Menu ──────────────────────────────────── */
+/* The 3-dot button on each file row that opens a dropdown with actions */
+
+.menu-container {
+    position: relative;
+}
+
+.menu-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    color: var(--text-muted);
+    font-size: 18px;
+    line-height: 1;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.menu-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.menu-dropdown {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    min-width: 180px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    box-shadow: var(--shadow-lg);
+    z-index: 50;
+    padding: 6px;
+    animation: menuFadeIn 0.15s ease;
+}
+
+.menu-dropdown.open {
+    display: block;
+}
+
+@keyframes menuFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    font-family: 'Inter', sans-serif;
+}
+
+.menu-item:hover {
+    background: var(--bg-hover);
+}
+
+.menu-item.danger {
+    color: var(--danger);
+}
+
+.menu-item.danger:hover {
+    background: rgba(220, 38, 38, 0.08);
+}
+
+.menu-item .menu-icon {
+    font-size: 16px;
+    width: 20px;
+    text-align: center;
+}
+
+.menu-divider {
+    height: 1px;
+    background: var(--border-color);
+    margin: 4px 0;
+}
+
+
+/* ─── 11. Right Panel ─────────────────────────────────────── */
+
+.right-panel {
+    width: var(--right-panel-width);
+    padding: 28px 20px;
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    overflow-y: auto;
+    transition: background-color 0.3s ease;
+}
+
+/* Upload drop zone */
+.upload-zone {
+    background: var(--bg-card);
+    border: 2px dashed var(--border-color);
+    border-radius: 14px;
+    padding: 28px 20px;
+    text-align: center;
+    margin-bottom: 24px;
+    transition: border-color 0.2s, background-color 0.3s ease;
+    cursor: pointer;
+}
+
+.upload-zone:hover,
+.upload-zone.drag-over {
+    border-color: var(--accent);
+    background: var(--accent-light);
+}
+
+.upload-zone .upload-icon {
+    font-size: 36px;
+    color: var(--accent);
+    margin-bottom: 8px;
+}
+
+.upload-zone .upload-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.upload-zone .upload-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.upload-zone input[type="file"] {
+    display: none;
+}
+
+.upload-options {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    justify-content: center;
+}
+
+.upload-options label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+}
+
+.upload-options input[type="checkbox"] {
+    accent-color: var(--accent);
+}
+
+.upload-btn {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 8px 24px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: background-color 0.2s;
+}
+
+.upload-btn:hover {
+    background: var(--accent-hover);
+}
+
+/* Storage stats card */
+.storage-card {
+    background: var(--bg-card);
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: var(--shadow);
+    margin-bottom: 24px;
+    transition: background-color 0.3s ease;
+}
+
+.storage-card .storage-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+}
+
+.storage-bar-bg {
+    width: 100%;
+    height: 8px;
+    background: var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.storage-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), #7c3aed);
+    border-radius: 4px;
+    transition: width 0.6s ease;
+}
+
+.storage-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.storage-breakdown {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.storage-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 13px;
+}
+
+.storage-item .item-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-primary);
+}
+
+.storage-item .item-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.storage-item .item-count {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+
+/* ─── 12. Buttons ─────────────────────────────────────────── */
 
 .btn {
-    padding: 8px 20px;
+    padding: 8px 18px;
     border: none;
-    border-radius: 5px;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
     text-decoration: none;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
 }
 
 .btn-primary {
-    background-color: #1a237e;
+    background: var(--accent);
     color: white;
 }
 
 .btn-primary:hover {
-    background-color: #283593;
+    background: var(--accent-hover);
 }
 
 .btn-danger {
-    background-color: #c62828;
+    background: var(--danger);
     color: white;
 }
 
 .btn-danger:hover {
-    background-color: #b71c1c;
+    background: var(--danger-hover);
 }
 
-/* Files table */
-.files-table {
-    width: 100%;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    border-collapse: collapse;
-    overflow: hidden;
+.btn-ghost {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
 }
 
-.files-table th {
-    background-color: #1a237e;
-    color: white;
-    padding: 12px 15px;
-    text-align: left;
-    font-size: 14px;
+.btn-ghost:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
 }
 
-.files-table td {
-    padding: 12px 15px;
-    border-bottom: 1px solid #eee;
-    font-size: 14px;
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
 }
 
-.files-table tr:last-child td {
-    border-bottom: none;
-}
 
-.files-table tr:hover {
-    background-color: #f5f5f5;
-}
+/* ─── 13. Empty State ─────────────────────────────────────── */
 
-.empty-message {
-    background: white;
-    padding: 30px;
+.empty-state {
     text-align: center;
-    border-radius: 8px;
-    color: #888;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 60px 20px;
+    background: var(--bg-card);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
 }
 
-.filter-buttons {
-    margin: 20px 0;
+.empty-state .empty-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.empty-state .empty-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.empty-state .empty-desc {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+
+/* ─── 14. Auth Pages (Login / Register) ───────────────────── */
+/* These pages don't have a sidebar — they're standalone centered cards */
+
+.auth-page {
+    min-height: 100vh;
     display: flex;
-    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: var(--bg-primary);
 }
 
-.btn-active {
-    background-color: #283593;
-    color: white;
-    border: 2px solid #1a237e;
-}
-
-/* Auth pages */
 .auth-container {
-    max-width: 400px;
-    margin: 60px auto;
-    padding: 0 20px;
+    width: 100%;
+    max-width: 420px;
     text-align: center;
 }
 
-.auth-container h1 {
-    font-size: 32px;
-    margin-bottom: 5px;
+.auth-brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.auth-brand .brand-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--accent);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: white;
+}
+
+.auth-brand h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.auth-subtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 32px;
 }
 
 .auth-box {
-    background: white;
-    padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    margin-top: 20px;
+    background: var(--bg-card);
+    padding: 32px;
+    border-radius: 16px;
+    box-shadow: var(--shadow-lg);
     text-align: left;
+    transition: background-color 0.3s ease;
 }
 
 .auth-box h2 {
-    margin-bottom: 20px;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 6px;
     text-align: center;
 }
 
+.auth-switch {
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+}
+
+.auth-switch a {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.auth-switch a:hover {
+    text-decoration: underline;
+}
+
 .form-group {
-    margin-bottom: 15px;
+    margin-bottom: 16px;
 }
 
 .form-group label {
     display: block;
-    margin-bottom: 5px;
-    font-size: 14px;
-    color: #555;
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
 }
 
 .form-group input,
 .form-group select {
     width: 100%;
-    padding: 9px 12px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+    padding: 10px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
     font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: border-color 0.2s, box-shadow 0.2s, background-color 0.3s;
 }
 
 .form-group input:focus,
 .form-group select:focus {
     outline: none;
-    border-color: #1a237e;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
 .btn-full {
     width: 100%;
-    padding: 10px;
-    margin-top: 5px;
+    padding: 11px;
+    margin-top: 8px;
+    font-size: 14px;
+    justify-content: center;
 }
 
 .error-message {
-    background: #ffebee;
-    color: #c62828;
-    padding: 10px;
-    border-radius: 5px;
-    margin-bottom: 15px;
-    font-size: 14px;
+    background: rgba(220, 38, 38, 0.08);
+    color: var(--danger);
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    border: 1px solid rgba(220, 38, 38, 0.15);
 }
 
-/* Top bar */
-.top-bar {
+.auth-footer-note {
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 16px;
+}
+
+.auth-footer-note a {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+/* Dark mode toggle on auth pages */
+.auth-theme-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10;
+}
+
+.auth-theme-btn {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--text-primary);
+    box-shadow: var(--shadow);
+    transition: all 0.2s;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: 6px;
+}
+
+.auth-theme-btn:hover {
+    box-shadow: var(--shadow-lg);
+}
+
+
+/* ─── 15. Admin Tables ────────────────────────────────────── */
+
+.admin-table {
+    width: 100%;
+    background: var(--bg-card);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    border-collapse: collapse;
+    overflow: hidden;
+    transition: background-color 0.3s ease;
+}
+
+.admin-table th {
+    background: var(--accent);
+    color: white;
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.admin-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.admin-table tr:last-child td {
+    border-bottom: none;
+}
+
+.admin-table tr:hover td {
+    background: var(--bg-hover);
+}
+
+.role-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.role-badge.admin {
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--accent);
+}
+
+.role-badge.member {
+    background: rgba(16, 163, 74, 0.1);
+    color: var(--success);
+}
+
+[data-theme="dark"] .role-badge.admin {
+    background: rgba(59, 130, 246, 0.15);
+}
+
+[data-theme="dark"] .role-badge.member {
+    background: rgba(34, 197, 94, 0.15);
+}
+
+
+/* ─── 16. Mobile Hamburger Button ─────────────────────────── */
+
+.mobile-header {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border-color);
+    z-index: 90;
+    padding: 0 16px;
+    align-items: center;
+    justify-content: space-between;
+    transition: background-color 0.3s ease;
+}
+
+.mobile-header .brand-text {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.hamburger-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--text-primary);
+    padding: 4px;
+}
+
+/* Overlay that appears behind sidebar on mobile */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 99;
+}
+
+.sidebar-overlay.active {
+    display: block;
+}
+
+
+/* ─── 17. Page Header ─────────────────────────────────────── */
+
+.page-header {
+    margin-bottom: 24px;
+}
+
+.page-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.page-header p {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.header-with-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+
+/* ─── 18. Folder Filter Pills ─────────────────────────────── */
+
+.filter-pills {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.filter-pill {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.filter-pill:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.filter-pill.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
+
+/* ─── 19. Responsive Design ───────────────────────────────── */
+
+/* Adjust main content to account for right panel */
+@media (min-width: 1025px) {
+    .main-content {
+        margin-right: var(--right-panel-width);
+    }
+}
+
+/* Tablet — hide right panel, stack it below */
+@media (max-width: 1024px) {
+    .right-panel {
+        position: static;
+        width: 100%;
+        padding: 0 32px 32px;
+        margin-left: var(--sidebar-width);
+    }
+
+    .main-content {
+        margin-right: 0;
+    }
+
+    .categories-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Mobile — sidebar becomes overlay, everything single column */
+@media (max-width: 768px) {
+    .mobile-header {
+        display: flex;
+    }
+
+    .sidebar {
+        transform: translateX(-100%);
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .main-content {
+        margin-left: 0;
+        padding: 72px 16px 24px;
+    }
+
+    .right-panel {
+        margin-left: 0;
+        padding: 0 16px 24px;
+    }
+
+    .categories-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .category-card {
+        padding: 16px;
+    }
+
+    .file-list-header {
+        display: none;
+    }
+
+    .file-row {
+        grid-template-columns: 40px 1fr 50px;
+        gap: 8px;
+        padding: 12px 14px;
+    }
+
+    .file-row .file-meta,
+    .file-row .share-badge {
+        display: none;
+    }
+
+    .view-tabs {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .filter-pills {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 4px;
+    }
+
+    .search-input-wrapper {
+        max-width: 100%;
+    }
+
+    .page-header h2 {
+        font-size: 18px;
+    }
+}
+
+/* Small phones */
+@media (max-width: 480px) {
+    .categories-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .category-card .cat-icon {
+        font-size: 22px;
+        margin-bottom: 8px;
+    }
+
+    .category-card .cat-name {
+        font-size: 13px;
+    }
+
+    .auth-box {
+        padding: 24px 20px;
+    }
+}
+
+
+/* ─── 20. Utility & Animation ─────────────────────────────── */
+
+/* Smooth transitions for all theme-switching */
+.sidebar, .main-content, .right-panel, .file-list,
+.storage-card, .upload-zone, .view-tabs, .auth-box,
+.admin-table, .mobile-header, .category-card, .empty-state,
+.filter-pill, .search-input, .form-group input,
+.form-group select, .menu-dropdown {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+/* Hidden helper for forms that POST via button */
+.hidden-form {
+    display: inline;
+}
+
+/* ─── Grid View ──────────────────────────────────────────── */
+
+/* View toggle buttons */
+.view-toggle {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.view-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    transition: all 0.15s ease;
+}
+
+.view-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.view-btn-active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
+/* Grid layout — replaces the row layout */
+.file-list.grid-view {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 14px;
+    background: none;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 4px 0;
+}
+
+/* Grid card */
+.file-list.grid-view .file-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--bg-card);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    padding: 16px 12px 12px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    position: relative;
+    grid-template-columns: none;
+    gap: 0;
+}
+
+.file-list.grid-view .file-row:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    background: var(--bg-hover);
+}
+
+/* Grid thumbnail */
+.file-list.grid-view .file-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 10px;
     margin-bottom: 10px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #ddd;
+    font-size: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.file-list.grid-view .file-icon img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+/* Grid file name */
+.file-list.grid-view .file-name {
+    font-size: 12px;
+    font-weight: 500;
+    text-align: center;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 0;
+    margin-bottom: 4px;
+}
+
+/* Hide columns that don't make sense in grid view */
+.file-list.grid-view .file-meta,
+.file-list.grid-view .share-badge,
+.file-list.grid-view .file-list-header {
+    display: none;
+}
+
+/* Show share badge as a small dot in grid view */
+.file-list.grid-view .grid-status {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+/* 3-dot button in grid view — top right corner of card */
+.file-list.grid-view .menu-container {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.file-list.grid-view .file-row:hover .menu-container {
+    opacity: 1;
+}
+
+/* Size text in grid */
+.file-list.grid-view .grid-size {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+/* Mobile grid adjustments */
+@media (max-width: 768px) {
+    .file-list.grid-view {
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 10px;
+    }
+
+    .file-list.grid-view .file-icon {
+        width: 64px;
+        height: 64px;
+    }
+
+    .file-list.grid-view .file-icon img {
+        width: 64px;
+        height: 64px;
+    }
 }

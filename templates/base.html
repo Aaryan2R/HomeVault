@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+{#
+    base layout file
+    most logged in pages use this
+    sidebar and common parts are here
+#}
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>HomeVault{% block title_suffix %} — Your Cloud{% endblock %}</title>
+        <link rel="stylesheet" href="/static/css/style.css" />
+        <!-- Load theme immediately to prevent flash of wrong theme -->
+        <script>
+            var saved = localStorage.getItem('homevault-theme');
+            if (saved === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        </script>
+    </head>
+    <body>
+
+        {# mobile top bar #}
+        <div class="mobile-header">
+            <button class="hamburger-btn" onclick="openSidebar()" aria-label="Open menu">☰</button>
+            <span class="brand-text">HomeVault</span>
+            <div style="width: 32px;"></div> {# just spacing #}
+        </div>
+
+        {# overlay for mobile sidebar #}
+        <div class="sidebar-overlay" onclick="closeSidebar()"></div>
+
+        {# main layout #}
+        <div class="app-layout">
+
+            {# sidebar #}
+            <aside class="sidebar">
+
+                {# brand and user info #}
+                <div class="sidebar-header">
+                    <div class="sidebar-brand">
+                        <div class="brand-icon">☁</div>
+                        <h1>HomeVault</h1>
+                    </div>
+                    <div class="sidebar-user">
+                        <div class="user-avatar">
+                            {{ session['username'][0]|upper }}
+                        </div>
+                        <div class="user-info">
+                            <div class="user-name">{{ session['username'] }}</div>
+                            <div class="user-role">{{ session['role'] }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                {# nav links #}
+                <nav class="sidebar-nav">
+                    <div class="nav-section-title">Menu</div>
+
+                    <a href="/?view=mine" class="nav-link {% if request.path == '/' and request.args.get('view', 'mine') == 'mine' %}active{% endif %}">
+                        <span class="nav-icon">📁</span>
+                        My Cloud
+                    </a>
+
+                    <a href="/?view=shared" class="nav-link {% if request.path == '/' and request.args.get('view') == 'shared' %}active{% endif %}">
+                        <span class="nav-icon">🔗</span>
+                        Shared Files
+                    </a>
+
+                    {% if session['role'] == 'admin' %}
+                    <a href="/?view=all" class="nav-link {% if request.path == '/' and request.args.get('view') == 'all' %}active{% endif %}">
+                        <span class="nav-icon">🌐</span>
+                        All Files
+                    </a>
+                    {% endif %}
+
+                    <a href="/trash" class="nav-link {% if request.path == '/trash' %}active{% endif %}">
+                        <span class="nav-icon">🗑️</span>
+                        Trash
+                    </a>
+
+                    {% if session['role'] == 'admin' %}
+                    <div class="nav-section-title">Admin</div>
+
+                    <a href="/admin/users" class="nav-link {% if '/admin' in request.path %}active{% endif %}">
+                        <span class="nav-icon">👥</span>
+                        Manage Users
+                    </a>
+                    {% endif %}
+                </nav>
+
+                {# bottom controls #}
+                <div class="sidebar-footer">
+                    <div class="theme-toggle">
+                        <div class="toggle-label">
+                            <span>🌙</span>
+                            <span>Dark Mode</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="theme-checkbox" onchange="toggleTheme()">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <form action="/logout" method="POST" style="margin: 0;">
+                        <button type="submit" class="nav-link"
+                                style="color:#f87171; background:none; border:none;
+                                       width:100%; text-align:left; cursor:pointer;
+                                       font-family:inherit; font-size:inherit;">
+                            <span class="nav-icon">🚪</span>
+                            Logout
+                        </button>
+                    </form>
+                </div>
+            </aside>
+
+            {# page content goes here #}
+            <main class="main-content">
+                {% block content %}{% endblock %}
+            </main>
+
+            {# optional right panel #}
+            {% block right_panel %}{% endblock %}
+
+        </div>
+
+        <!-- ── File Preview Modal ── -->
+<div id="previewModal" style="display:none; position:fixed; top:0; left:0;
+     width:100%; height:100%; background:rgba(0,0,0,0.92);
+     z-index:1000; align-items:center; justify-content:center;">
+
+    <!-- Close button -->
+    <button onclick="closePreview()"
+            style="position:absolute; top:16px; right:20px;
+                   background:none; border:none; color:white;
+                   font-size:32px; cursor:pointer; z-index:1001;
+                   line-height:1;">×</button>
+
+    <!-- File name at top -->
+    <div id="previewFileName"
+         style="position:absolute; top:16px; left:50%; transform:translateX(-50%);
+                color:white; font-size:14px; font-weight:500;
+                font-family:'Inter',sans-serif; opacity:0.85;
+                max-width:60%; overflow:hidden; text-overflow:ellipsis;
+                white-space:nowrap;"></div>
+
+    <!-- Content area — image, video, pdf, or message goes here -->
+    <div id="previewContent"
+         style="max-width:90vw; max-height:90vh;
+                display:flex; align-items:center; justify-content:center;">
+    </div>
+
+</div>
+
+        <script src="/static/js/app.js"></script>
+    </body>
+</html>

@@ -1,35 +1,66 @@
+{#
+    login page
+    not using base layout because user is not inside app yet
+    simple centered card is enough
+#}
 <!doctype html>
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>HomeVault - Login</title>
+        <title>HomeVault — Login</title>
         <link rel="stylesheet" href="/static/css/style.css" />
+        <script>
+            var saved = localStorage.getItem('homevault-theme');
+            if (saved === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        </script>
     </head>
     <body>
-        <div class="auth-container">
-            <h1>HomeVault</h1>
-            <p>Your personal file storage system</p>
+        {# theme button #}
+        <div class="auth-theme-toggle">
+            <button class="auth-theme-btn" onclick="toggleTheme()" title="Toggle dark mode">
+                🌙
+            </button>
+        </div>
 
-            <div class="auth-box">
-                <h2>Login</h2>
+        <div class="auth-page">
+            <div class="auth-container">
+                <div class="auth-brand">
+                    <div class="brand-icon">☁</div>
+                    <h1>HomeVault</h1>
+                </div>
+                <p class="auth-subtitle">Your personal cloud storage</p>
 
-                {% if error %}
-                    <div class="error-message">{{ error }}</div>
-                {% endif %}
+                <div class="auth-box">
+                    <h2>Welcome Back</h2>
+                    <p class="auth-switch">
+                        No account yet?
+                        <a href="/register">Create your first account</a>
+                    </p>
 
-                <form action="/login" method="POST">
-                    <div class="form-group">
-                        <label>Username</label>
-                        <input type="text" name="username" required autofocus />
-                    </div>
-                    <div class="form-group">
-                        <label>Password</label>
-                        <input type="password" name="password" required />
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-full">Login</button>
-                </form>
+                    {% if error %}
+                        <div class="error-message">{{ error }}</div>
+                    {% endif %}
+
+                    <form action="/login" method="POST">
+                        <div class="form-group">
+                            <label>Username</label>
+                            <input type="text" name="username" required autofocus
+                                   placeholder="Enter your username" />
+                        </div>
+                        <div class="form-group">
+                            <label>Password</label>
+                            <input type="password" name="password" required
+                                   placeholder="Enter your password" />
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full">Login</button>
+                    </form>
+                </div>
             </div>
         </div>
+
+        <script src="/static/js/app.js"></script>
     </body>
 </html>

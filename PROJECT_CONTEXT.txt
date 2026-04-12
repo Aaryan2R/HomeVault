@@ -1,0 +1,684 @@
+HomeVault Project Context
+
+Purpose of this file:
+This file is the persistent handoff note for future AI sessions.
+If the terminal chat is lost, the next session should read this file first, then read the current codebase, and continue from there.
+
+
+1. Project Identity
+
+Project name:
+HomeVault
+
+Short description:
+HomeVault is a local private cloud storage web application for home/family use. It is inspired by Google Drive and Google Photos, but runs locally on the user's own computer and stores files on local disk.
+
+Core idea:
+- upload files from a browser
+- store real files on local storage
+- store file metadata in SQLite
+- show files in a simple web UI
+- support search, filtering, download, delete, and photo thumbnails
+
+
+2. Important User Context
+
+The user is a college student building this as a BCA final-year project.
+The user is a beginner in coding and knows only basic programming concepts.
+This project must be built in a way that the user can:
+- understand it
+- explain it in viva
+- finish it within a short deadline
+- learn while building
+
+Very important:
+Do not overcomplicate the project.
+Prefer simple, explainable solutions over advanced architecture.
+Do not default to fully automatic implementation without teaching.
+
+
+3. What We Learned From chat1.txt
+
+chat1.txt is the long-term vision, not the short-term implementation checklist.
+
+The original vision was:
+- a local NAS-like storage platform
+- family-friendly private cloud
+- dynamic folder-based storage on an existing PC/laptop
+- local-first design so files remain physically accessible on disk
+- Google Drive + Google Photos style experience
+- future support for personal spaces, shared family spaces, and maybe role hierarchy
+- maybe Android auto backup in the future
+
+This vision matters for:
+- project story
+- problem statement
+- introduction
+- viva explanation
+- future scope
+
+But this full vision is too large for the current submission timeline.
+
+
+4. What We Learned From chat2.txt
+
+chat2.txt is the simplified build path.
+
+Key lesson from chat2:
+The project should be kept basic and built step by step because the user is learning while building.
+
+That means:
+- use simple stack
+- explain each file and feature clearly
+- avoid enterprise features
+- focus on a strong, polished v1
+
+Important caution:
+chat2 contains some claims about features that were "already built", but the actual codebase must always be treated as the source of truth.
+Do not assume a feature exists unless it is present in the code.
+
+
+5. Actual Current Stack
+
+Current stack in this codebase:
+- Python
+- Flask
+- SQLite
+- HTML
+- CSS
+- Jinja templates
+- Pillow
+
+Current dependency file:
+- requirements.txt
+
+Current known dependencies:
+- Flask==3.1.3
+- Pillow==12.1.1
+
+
+6. Current Project Scope
+
+Current target is NOT the full dream product.
+
+Current target is:
+HomeVault v1 = a beginner-manageable, submission-ready local storage web app.
+
+The project should be:
+- working
+- clean
+- easy to explain
+- visually decent
+- realistic to finish within the deadline
+
+Do not prioritize:
+- multi-user auth
+- RBAC
+- business hierarchy
+- Android app
+- sync client
+- enterprise security
+- advanced distributed architecture
+
+Those belong to future scope unless the user explicitly decides otherwise later.
+
+
+7. Submission-Focused Plan
+
+Primary completion plan:
+
+1. Stabilize current codebase
+- fix bugs
+- clean naming
+- improve reliability
+
+2. Improve core file management
+- keep upload, download, delete, search, and filter working properly
+- add simple practical improvements if time allows
+
+3. Improve viewing experience
+- solid image thumbnails
+- possibly simple preview improvements if manageable
+
+4. Improve UI and usability
+- cleaner, more polished interface
+- better demo experience
+
+5. Add one or two manageable showcase features
+- rename file
+- trash/recycle bin
+- file details
+- small storage stats
+Only add features that remain understandable to the user.
+
+6. Submission preparation
+- requirements.txt
+- documentation
+- setup instructions
+- viva preparation
+
+
+8. Current Implementation Status
+
+Already implemented in the actual codebase:
+- file upload
+- automatic categorization into Photos / Videos / Documents / Others
+- file metadata stored in SQLite
+- file listing on homepage
+- search by filename
+- category filter buttons
+- download
+- delete
+- photo thumbnails
+- basic HTML/CSS interface
+
+Files currently in project:
+- app.py
+- database.py
+- thumbnailer.py
+- templates/index.html
+- static/css/style.css
+- homevault.db
+- requirements.txt
+- VIVA_NOTES.txt
+- CHEAT_SHEET.txt
+- PROJECT_CONTEXT.txt
+
+
+9. Important Technical Understanding
+
+The project uses two storage layers:
+
+1. Actual file storage
+Real uploaded files are stored on disk inside storage/.
+
+2. Metadata storage
+File information is stored in SQLite inside homevault.db.
+
+The database stores metadata only, not the actual file content.
+
+Important concepts the user should be able to explain:
+- Flask routes handle browser requests
+- SQLite stores file metadata
+- Jinja renders dynamic HTML
+- UUID prevents filename collisions
+- Pillow generates photo thumbnails
+- Files are categorized by extension
+
+
+10. Known Caveats / Reality Check
+
+The current codebase is a working prototype, not a final polished submission.
+
+There are some known quality issues that should be cleaned up over time.
+Future sessions should inspect the live code before making assumptions.
+
+Important rule:
+Codebase truth > chat history claims
+
+
+11. Learning / Communication Style For Future Sessions
+
+The user needs:
+- simple explanations
+- step-by-step reasoning
+- beginner-friendly terminology
+- short, clear descriptions of what changed and why
+- a teacher/guide style, not just an automatic coder
+- enough explanation to understand each feature before or while building it
+
+When adding a feature, explain:
+- what it does
+- where it is implemented
+- how the flow works
+- why this design was chosen
+
+Avoid dumping advanced theory unless asked.
+Avoid unnecessary jargon.
+
+Preferred workflow:
+1. Explain the next step in simple words
+2. Show the files/functions that matter
+3. Let the user understand the change
+4. Then implement with guidance, or implement after explaining clearly
+5. Keep the user able to defend the code in viva
+
+Important rule:
+The goal is not only to finish the project.
+The goal is also to help the user become better at coding and understand what is being built.
+
+
+12. Session Recovery Instructions
+
+If a future session starts fresh, do this:
+
+1. Read PROJECT_CONTEXT.txt
+2. Read VIVA_NOTES.txt and CHEAT_SHEET.txt for user-facing explanation context
+3. Inspect the actual codebase files
+4. Compare current code against the plan in this file
+5. Continue from the real current state
+
+
+13. Maintenance Rule
+
+This file should be updated whenever major project progress happens, especially when:
+- new features are added
+- project scope changes
+- dependencies change
+- key decisions are made
+- a new milestone is reached
+
+The same applies to requirements.txt when new packages are added.
+
+14. Latest Session Update (2026-03-27)
+
+This session completed the GitHub preparation and first public push.
+
+What was done:
+- inspected the actual HomeVault codebase
+- confirmed the current app is a Flask + SQLite local file vault MVP
+- clarified the project vision: local private cloud for home/family use, but current target is a simple submission-ready v1
+- created a public-facing README.md for GitHub
+- created a .gitignore file
+- excluded personal/internal files from git:
+  - CHEAT_SHEET.txt
+  - PROJECT_CONTEXT.txt
+  - VIVA_NOTES.txt
+- excluded local/runtime files from git:
+  - venv/
+  - __pycache__/
+  - storage/
+  - static/thumbnails/
+  - *.db
+- verified requirements.txt is valid for the current codebase
+- initialized git in the HomeVault folder
+- connected the GitHub remote
+- pushed the first commit to GitHub
+
+GitHub details:
+- repository: https://github.com/Aaryan2R/HomeVault
+- default branch: main
+- initial public commit: 1d58473
+- commit message: Initial HomeVault project setup
+
+Current repo state on GitHub includes:
+- app.py
+- database.py
+- thumbnailer.py
+- templates/
+- static/css/
+- requirements.txt
+- README.md
+- .gitignore
+
+Important reminder for future sessions:
+- do not commit personal/internal .txt files
+- do not commit storage files, database files, thumbnails, or venv
+- continue making small meaningful commits to show progress clearly on GitHub
+
+Recommended next implementation priority:
+1. stabilize current code and fix quality issues
+2. improve file/path reliability
+3. improve UI and usability
+4. add one manageable showcase feature such as rename, file details, or storage stats
+5. update README if major features change
+
+15. Latest Session Update (2026-03-28)
+
+This session resumed from PROJECT_CONTEXT.txt and the current codebase.
+
+What happened:
+- confirmed the repo state and current project files
+- began the next phase: stabilization before adding new features
+- the first attempted automatic edit was intentionally stopped by the user before changes were applied
+- verified that no project files were changed by that aborted attempt
+- aligned with the user's preferred workflow again: explain first, then edit only after approval
+
+Technical review discussed in this session:
+1. Relative path reliability issue
+- current code uses relative paths like 'storage', 'homevault.db', and 'static/thumbnails'
+- this can break if the app is started from a different working directory
+- planned fix: use the project folder as a base path and build absolute project-local paths from it
+
+2. Missing folder creation safety
+- current code assumes storage subfolders and static/thumbnails already exist
+- planned fix: create required folders automatically at startup
+
+3. Unsafe delete design
+- current delete action uses GET via a normal link
+- planned fix: change delete to POST via a form
+
+4. Code cleanup opportunity
+- download route manually queries the database instead of using a helper function
+- planned fix: move repeated lookup logic into database.py
+
+5. Small data/UI cleanup
+- upload_DATE naming inconsistency in the database schema
+- broken icon text/emoji rendering in the HTML template
+
+Important current status:
+- no code changes were made in this session
+- the only change was discussion and explanation
+
+Most recent approved explanation given to user:
+- explained the first fix in beginner-friendly terms: why relative paths are fragile and why startup folder creation is needed
+
+Next recommended resume point:
+- explain the second fix: why delete should use POST instead of GET
+- then apply changes only after the user explicitly approves them
+
+16. Latest Session Update (2026-04-06)
+
+This session resumed from PROJECT_CONTEXT.txt, chat1.txt, chat2.txt, and the live HomeVault codebase.
+
+What was confirmed first:
+- D:\ChatBot only contained the handoff and chat transcript files
+- the real project code is in C:\Users\aarya\Desktop\Study Material\HomeVault
+- the live codebase must be treated as source of truth over old chat claims
+
+What the current live codebase now includes beyond the older chats:
+- login and registration flow
+- users table with roles
+- session-based auth
+- shared/private file flag
+- trash page
+- admin users pages
+
+Important review outcome from this session:
+- the app/database mismatch that existed during earlier review was traced and rechecked
+- the current code was reviewed again from the actual source files
+- real isolated testing was performed using Flask test client against a copied test app so the user's real data was not changed
+
+Verified fixes completed in this session:
+1. Issue 1 - shared upload flag was not being saved
+- app.py upload now passes is_shared into save_file(...)
+- database.py save_file(...) now accepts is_shared
+- database INSERT placeholder count was corrected so upload works
+- isolated verification confirmed uploaded file saved with is_shared = 1
+
+2. Issue 2 - trash permission bug
+- restore route now checks file existence, session user, and admin/owner permission before restoring
+- permanent_delete route now checks file existence, session user, and admin/owner permission before deleting
+- isolated verification confirmed another member receives 403 for both restore and permanent delete on someone else's trashed file
+- isolated verification confirmed the file remained in trash and was not deleted by another member
+
+Technical details of isolated verification:
+- test environment used a copied app under D:\ChatBot\homevault_test_verify
+- project compiled successfully after the fixes
+- test results:
+  - upload returned 302
+  - uploaded file row showed is_shared = 1
+  - unauthorized restore returned 403
+  - unauthorized permanent delete returned 403
+  - file count remained 1 and is_deleted remained 1
+
+Current confirmed status after this session:
+- Issue 1: fixed and verified
+- Issue 2: fixed and verified
+
+Pending issues intentionally left for later by user choice:
+- Issue 3: destructive actions still use GET instead of POST
+- Issue 4: trash page non-photo icons are blank
+- Issue 5: better error handling for invalid or missing records/files
+
+Important reminder for future sessions:
+- keep reminding the user that Issues 3, 4, and 5 are still pending
+- do not silently change those pending items unless the user asks to continue with them
+
+Discussion outcome about local URL / LAN access:
+- localhost:5000 is acceptable for the project on the host machine
+- other devices cannot use localhost; they must use the host machine's LAN IP such as http://192.168.x.x:5000
+- for LAN testing the Flask app should be run on host 0.0.0.0 instead of only localhost if external devices need access
+- a prettier hostname like homevault/homevault.local is possible later with hosts-file, local DNS, or nginx/reverse proxy setup, but this is optional and not required for the BCA project
+- the user's idea of an automatic IP watcher that rewrites nginx config on IP change can technically work, but it is overkill for the current project and should not be prioritized now
+
+Recommended next implementation priority after this session:
+1. keep the current verified fixes stable
+2. later change destructive routes from GET to POST
+3. later fix trash non-photo icons
+4. later improve error handling
+5. if needed for demo, explain how to run the app on LAN and find the host IP with ipconfig
+
+17. Latest Session Update (2026-04-07)
+
+This session resumed from PROJECT_CONTEXT.txt and the live HomeVault codebase at:
+- C:\Users\admin\Desktop\My Files\Study Material\HomeVault
+
+What was confirmed:
+- the pending future-fix issues are still:
+  - state-changing actions still use GET instead of POST
+  - trash page non-photo icons are blank
+  - missing-file/error handling is still weak
+- these issues were discussed and intentionally left for later by user choice
+
+Important database/auth finding from this session:
+- the live SQLite database was inspected directly
+- the users table currently has 0 users
+- because of that, login will always fail until the first account is created
+- the first account must be created from /register
+- the first registered user becomes admin automatically because register() checks count_users() == 0
+
+Auth page UI changes completed in this session:
+1. login.html cleaned up
+- removed the manually inserted register link from inside the Login heading
+- added a proper helper line below the heading:
+  - "No account yet? Create your first account"
+
+2. register.html cleaned up
+- added a proper "Back to login" helper for the normal create-user page
+- added a proper "Go to login" helper for the first-user/create-admin case
+
+3. style.css updated
+- added auth-switch styles so the new helper links look intentional and consistent
+
+Session behavior clarified in this session:
+- current login is not persistent across full browser close
+- current code stores auth state in Flask session
+- no permanent session / remember-me behavior is configured yet
+- so after closing the browser, the app may ask for login again
+
+Important note for future sessions:
+- if the user wants persistent login later, a simple next step is:
+  - set session.permanent = True on successful login
+  - configure app.permanent_session_lifetime
+- do not apply that automatically unless the user asks
+
+Current recommended next step for the user:
+1. visit /register
+2. create the first account
+3. log in with that account
+
+Reminder to keep carrying forward:
+- keep reminding the user of the three deferred issues:
+  - GET vs POST for state-changing actions
+  - blank trash icons for non-photo files
+  - weak missing-file/error handling
+
+18. Latest Session Update (2026-04-12)
+
+This session resumed from PROJECT_CONTEXT.txt and rechecked the live HomeVault codebase again.
+
+Important correction:
+- PROJECT_CONTEXT.txt had fallen behind the real codebase
+- future sessions must treat the current source files as newer than the older pending-issues notes above
+
+What is confirmed in the current live codebase now:
+- state-changing file actions already use POST:
+  - delete
+  - share
+  - restore
+  - permanent_delete
+- the UI is no longer the old simple layout
+- the app now has:
+  - base.html layout
+  - sidebar navigation
+  - mobile header/sidebar behavior
+  - dark mode support
+  - right-side upload panel
+  - storage stats in the dashboard
+- auth pages were redesigned beyond the older basic version
+
+Important current UI/code mismatch found:
+- templates/index.html includes a Preview action that calls:
+  - openPreview(...)
+- the live static/js/app.js does NOT define openPreview()
+- the current app.js ends at line 192
+- there is also no preview route or preview modal implementation confirmed in the live codebase
+- this means the visible Preview action is currently incomplete/broken and should be treated as a real pending issue
+
+Current recommended real pending issues:
+1. broken Preview action in dashboard file menu
+2. logout still uses GET link in base.html
+3. download route still does not explicitly handle missing physical files before send_file(...)
+4. PROJECT_CONTEXT.txt should keep being updated to match the newer UI/code state
+
+User preference clarified in this session:
+- the user compared:
+  - C:\Users\admin\Desktop\My Files\Study Material\HomeVault
+  - C:\Users\admin\Desktop\My Files\Study Material\Home Vault Backup\HomeVault
+- user personally prefers the current HomeVault UI
+
+Comparison conclusion from this session:
+- backup UI looked more product-polished / enterprise-like
+- current HomeVault UI felt more friendly and more personally appealing to the user
+
+Session-login clarification:
+- persistent login across browser restarts is still not enabled
+- this may actually be acceptable or preferable for privacy on a shared PC
+- recommendation: only add persistent login later if the user explicitly wants convenience over stricter local privacy
+
+Practical recommendation going forward:
+- do NOT rush persistent login by default on a family/shared computer
+- first fix visible correctness issues before convenience issues
+- best next implementation target:
+  1. remove or properly implement Preview
+  2. later decide whether logout should also be changed from GET to POST
+  3. only after that reconsider persistent login if the user wants it
+
+19. Latest Session Update (2026-04-12, later re-review)
+
+This session re-reviewed the live HomeVault code again after the user made major manual changes.
+
+Important correction to older notes:
+- the older "Preview is broken/missing" note is no longer true
+- Preview is now implemented end-to-end in the live codebase
+
+What is confirmed in the current live codebase now:
+- app.py has a working preview route:
+  - /preview/<int:file_id>
+- static/js/app.js now includes:
+  - handlePreview(button)
+  - openPreview(fileId, fileType, fileName)
+  - closePreview()
+  - grid/list view toggle logic using localStorage
+- templates/base.html now includes the preview modal container
+- templates/index.html now uses:
+  - handlePreview(this)
+  - data-id
+  - data-type
+  - data-name
+
+Current real issues still worth remembering:
+1. logout still uses GET
+- app.py logout route is still:
+  - @app.route('/logout')
+- templates/base.html still uses a normal logout link:
+  - href="/logout"
+- this is not as serious as delete/share mistakes, but POST logout is cleaner and safer
+
+2. encoding/mojibake text is still present in multiple files
+- examples appear in:
+  - app.py comments
+  - static/js/app.js comments
+  - templates/base.html
+  - templates/login.html
+  - templates/register.html
+  - templates/trash.html
+- visible symbols like close buttons, icons, arrows, and decorative text may render incorrectly on some systems
+- this is now a real code-quality/UI-cleanup issue
+
+3. PROJECT_CONTEXT.txt can become outdated quickly
+- future sessions must always re-check the real source files before trusting older handoff notes
+
+Quick review result from this session:
+- Preview feature: present
+- Grid/list UI toggle: present
+- Upload/share/trash actions: still using POST where expected
+- persistent login across browser restarts: still not enabled by design
+
+Practical recommendation going forward:
+1. keep the current preview implementation
+2. later change logout to POST
+3. clean the encoding-corrupted text across templates/comments
+4. only then decide whether convenience features like persistent login are needed
+
+20. Latest Session Update (2026-04-12, after fixing findings 1-4)
+
+This session re-reviewed the live HomeVault codebase again after the user made more significant manual changes.
+
+Important correction:
+- some older notes above are now outdated again
+- logout is no longer GET
+- the earlier major route issues that were reviewed and approved for fixing are now already implemented
+
+What is confirmed in the current live codebase now:
+- logout now uses POST:
+  - app.py has @app.route('/logout', methods=['POST'])
+  - templates/base.html now uses a POST form button for logout
+- trashed files are now blocked from:
+  - download
+  - preview
+  - share
+- download now checks whether the physical file exists on disk before send_file(...)
+- /admin/user/<id> now returns 404 with "User not found" if the user does not exist
+
+Quick isolated verification done in this session:
+- first registration works
+- upload works
+- home page loads
+- trash page loads
+- delete to trash works
+- trashed download returns 404
+- trashed preview returns 404
+- invalid admin user returns 404
+- logout via POST redirects to /login
+- visiting / after logout redirects back to /login
+
+Current quick-review result:
+- no new major functional regression was found in the core flows checked in this session
+- the recently fixed auth/trash/download/admin-user issues are still working correctly
+
+Separate list: new current findings from this session
+- no new major immediate bug was confirmed in the quick review
+- PROJECT_CONTEXT.txt itself needed updating because older entries still said:
+  - logout uses GET
+  - those points are now outdated
+
+Separate list: already discussed later/deferred items
+1. hardcoded secret key
+- app.py still contains:
+  - app.secret_key = 'homevault-secret-key-change-this-later'
+
+2. debug mode still enabled
+- app.py still ends with:
+  - app.run(debug=True, threaded=True)
+
+3. README is outdated
+- README still says preview is a future roadmap item even though preview already exists
+- README also still needs a general refresh so documentation matches the live app
+
+4. source-text / mojibake cleanup is still optional later cleanup
+- raw file reads still show some mojibake-like text in comments/templates in this terminal
+- treat this as cleanup, not as a newly confirmed critical runtime bug, unless it is visibly broken in the browser
+
+5. persistent login across full browser restarts is still not enabled
+- this is still a product decision, not a newly confirmed bug
+- may be acceptable for privacy on a shared PC
+
+Practical recommendation going forward:
+1. keep current core behavior stable
+2. if the user wants, next fix the deferred final-polish items:
+   - secret key
+   - debug mode
+   - README refresh
+3. only revisit persistent login if the user explicitly prefers convenience over stricter local privacy

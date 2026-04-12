@@ -16,7 +16,7 @@ def init_db():
     conn = get_db()
     cursor = conn.cursor()
 
-    # Files table
+    # table for files
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS files (
             id           INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -33,7 +33,7 @@ def init_db():
         )
     ''')
 
-    # Users table
+    # table for users
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -53,7 +53,7 @@ def upgrade_db():
     conn = get_db()
     cursor = conn.cursor()
 
-    # Add new columns to existing databases safely
+    # for older db versions try adding missing columns
     new_columns = [
         'ALTER TABLE files ADD COLUMN is_deleted INTEGER DEFAULT 0',
         'ALTER TABLE files ADD COLUMN deleted_at TEXT DEFAULT NULL',
@@ -65,23 +65,23 @@ def upgrade_db():
         try:
             cursor.execute(sql)
         except:
-            pass  # column already exists, skip
+            pass  # maybe column already there
 
     conn.commit()
     conn.close()
 
 
-# ─── User functions ───────────────────────────────────────────
+# user functions
 
 def create_user(username, password, role='member'):
     conn = get_db()
     cursor = conn.cursor()
 
-    # Check if username already exists
+    # check duplicate username first
     cursor.execute('SELECT id FROM users WHERE username = ?', (username,))
     if cursor.fetchone():
         conn.close()
-        return None  # username taken
+        return None  # already used
 
     hashed   = generate_password_hash(password)
     created  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -127,9 +127,9 @@ def get_all_users():
 def check_login(username, password):
     user = get_user_by_username(username)
     if user is None:
-        return None  # user not found
+        return None  # no such user
     if check_password_hash(user['password'], password):
-        return user  # password correct
+        return user  # login ok
     return None      # wrong password
 
 
@@ -142,7 +142,7 @@ def count_users():
     return count
 
 
-# ─── File functions ───────────────────────────────────────────
+# file functions
 
 def save_file(filename, original_name, file_type, file_size, folder, upload_date, owner_id, is_shared=0):
     conn = get_db()
@@ -329,8 +329,75 @@ def toggle_shared(file_id):
         conn.close()
         return
 
-    # flip 0 to 1 or 1 to 0
+    # simple toggle
     new_value = 1 if file['is_shared'] == 0 else 0
     cursor.execute('UPDATE files SET is_shared = ? WHERE id = ?', (new_value, file_id))
     conn.commit()
     conn.close()
+
+
+# storage stats
+
+def get_storage_stats(owner_id=None):
+    """
+    Returns storage usage info for the dashboard.
+    If owner_id is given, only counts that user's files.
+    Only counts non-deleted files (not in trash).
+
+    Returns a dictionary like:
+    {
+        'total_files': 42,
+        'total_size': 157286400,       # bytes
+        'categories': {
+            'Photos':    {'count': 20, 'size': 80000000},
+            'Videos':    {'count': 5,  'size': 50000000},
+            'Documents': {'count': 12, 'size': 25000000},
+            'Others':    {'count': 5,  'size': 2286400},
+        }
+    }
+    """
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # where part changes if owner filter is there
+    if owner_id:
+        where = 'WHERE is_deleted = 0 AND owner_id = ?'
+        params = (owner_id,)
+    else:
+        where = 'WHERE is_deleted = 0'
+        params = ()
+
+    # get count and size for each folder
+    cursor.execute(f'''
+        SELECT folder, COUNT(*) as count, COALESCE(SUM(file_size), 0) as size
+        FROM files
+        {where}
+        GROUP BY folder
+    ''', params)
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    # make final dict
+    categories = {}
+    total_files = 0
+    total_size = 0
+
+    for row in rows:
+        categories[row['folder']] = {
+            'count': row['count'],
+            'size': row['size']
+        }
+        total_files += row['count']
+        total_size += row['size']
+
+    # keep all 4 categories even if count is zero
+    for cat in ['Photos', 'Videos', 'Documents', 'Others']:
+        if cat not in categories:
+            categories[cat] = {'count': 0, 'size': 0}
+
+    return {
+        'total_files': total_files,
+        'total_size': total_size,
+        'categories': categories
+    }

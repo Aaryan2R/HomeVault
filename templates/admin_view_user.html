@@ -1,63 +1,76 @@
-<!doctype html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>HomeVault - {{ user['username'] }}'s Files</title>
-        <link rel="stylesheet" href="/static/css/style.css" />
-    </head>
-    <body>
-        <div class="container">
-            <h1>HomeVault</h1>
+{#
+    one user details page for admin
+    mostly to see that user's files
+#}
+{% extends "base.html" %}
 
-            <div class="filter-buttons" style="margin-top: 20px;">
-                <a href="/" class="btn btn-primary">My Files</a>
-                <a href="/admin/users" class="btn btn-primary">All Users</a>
-                <a href="/logout" class="btn btn-danger">Logout</a>
-            </div>
+{% block title_suffix %} — {{ user['username'] }}'s Files{% endblock %}
 
-            <h2>{{ user['username'] }}'s Files ({{ files|length }})</h2>
+{% block content %}
 
-            {% if files %}
-            <table class="files-table">
-                <tr>
-                    <th>Preview</th>
-                    <th>Name</th>
-                    <th>Type</th>
-                    <th>Size</th>
-                    <th>Date</th>
-                    <th>Shared</th>
-                </tr>
-                {% for file in files %}
-                <tr>
-                    <td>
-                        {% if file['file_type'] == 'Photos' %}
-                            <img src="/static/thumbnails/{{ file['id'] }}.jpg"
-                                 width="60" height="60"
-                                 style="object-fit: cover; border-radius: 4px;">
-                        {% else %}
-                            <div style="width:60px; height:60px; background:#eee;
-                                        border-radius:4px; display:flex; align-items:center;
-                                        justify-content:center; font-size:24px;">
-                                {% if file['file_type'] == 'Videos' %}🎬
-                                {% elif file['file_type'] == 'Documents' %}📄
-                                {% else %}📁{% endif %}
-                            </div>
-                        {% endif %}
-                    </td>
-                    <td>{{ file['original_name'] }}</td>
-                    <td>{{ file['file_type'] }}</td>
-                    <td>{{ format_size(file['file_size']) }}</td>
-                    <td>{{ file['upload_date'] }}</td>
-                    <td>{{ 'Yes' if file['is_shared'] else 'No' }}</td>
-                </tr>
-                {% endfor %}
-            </table>
-            {% else %}
-            <div class="empty-message">
-                <p>This user has no files yet.</p>
-            </div>
-            {% endif %}
+    <div class="page-header">
+        <h2>📂 {{ user['username'] }}'s Files ({{ files|length }})</h2>
+        <p>
+            Role: <span class="role-badge {{ user['role'] }}">{{ user['role']|capitalize }}</span>
+            &nbsp;·&nbsp;
+            <a href="/admin/users" style="color: var(--accent);">← Back to all users</a>
+        </p>
+    </div>
+
+    {% if files %}
+    <div class="file-list">
+        <div class="file-list-header">
+            <span></span>
+            <span>Name</span>
+            <span>Type</span>
+            <span>Size</span>
+            <span>Status</span>
+            <span></span>
         </div>
-    </body>
-</html>
+
+        {% for file in files %}
+        <div class="file-row">
+            <div class="file-icon {{ file['file_type']|lower }}">
+                {% if file['file_type'] == 'Photos' %}
+                    <img src="/static/thumbnails/{{ file['id'] }}.jpg"
+                         alt="{{ file['original_name'] }}"
+                         onerror="this.style.display='none'; this.parentElement.textContent='📷';">
+                {% elif file['file_type'] == 'Videos' %}
+                    🎬
+                {% elif file['file_type'] == 'Documents' %}
+                    📄
+                {% else %}
+                    📦
+                {% endif %}
+            </div>
+
+            <div class="file-name" title="{{ file['original_name'] }}">
+                {{ file['original_name'] }}
+            </div>
+
+            <div class="file-meta">{{ file['file_type'] }}</div>
+
+            <div class="file-meta">{{ format_size(file['file_size']) }}</div>
+
+            <div>
+                {% if file['is_shared'] %}
+                    <span class="share-badge shared">Public</span>
+                {% else %}
+                    <span class="share-badge private">Private</span>
+                {% endif %}
+            </div>
+
+            <div><!-- no actions on this view --></div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <div class="empty-title">No files</div>
+        <div class="empty-desc">{{ user['username'] }} hasn't uploaded any files yet.</div>
+    </div>
+    {% endif %}
+
+{% endblock %}

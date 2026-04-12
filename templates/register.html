@@ -1,60 +1,97 @@
+{#
+    register page
+    first user becomes admin automatically
+    later admin can also create users here
+#}
 <!doctype html>
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>HomeVault - Register</title>
+        <title>HomeVault — Register</title>
         <link rel="stylesheet" href="/static/css/style.css" />
+        <script>
+            var saved = localStorage.getItem('homevault-theme');
+            if (saved === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        </script>
     </head>
     <body>
-        <div class="auth-container">
-            <h1>HomeVault</h1>
-            <p>Your personal file storage system</p>
+        {# theme button #}
+        <div class="auth-theme-toggle">
+            <button class="auth-theme-btn" onclick="toggleTheme()" title="Toggle dark mode">
+                🌙
+            </button>
+        </div>
 
-            <div class="auth-box">
+        <div class="auth-page">
+            <div class="auth-container">
+                <div class="auth-brand">
+                    <div class="brand-icon">☁</div>
+                    <h1>HomeVault</h1>
+                </div>
+                <p class="auth-subtitle">Your personal cloud storage</p>
 
-                {% if first_user %}
-                    <h2>Create Admin Account</h2>
-                    <p style="color: #888; font-size: 13px; margin-bottom: 15px;">
-                        First account is automatically set as Admin.
-                    </p>
-                {% else %}
-                    <h2>Create New User</h2>
-                {% endif %}
-
-                {% if error %}
-                    <div class="error-message">{{ error }}</div>
-                {% endif %}
-
-                <form action="/register" method="POST">
-                    <div class="form-group">
-                        <label>Username</label>
-                        <input type="text" name="username" required autofocus />
-                    </div>
-                    <div class="form-group">
-                        <label>Password</label>
-                        <input type="password" name="password" required />
-                    </div>
-                    <div class="form-group">
-                        <label>Confirm Password</label>
-                        <input type="password" name="confirm" required />
-                    </div>
-
-                    {% if not first_user %}
-                    <div class="form-group">
-                        <label>Role</label>
-                        <select name="role">
-                            <option value="member">Member</option>
-                            <option value="admin">Admin</option>
-                        </select>
-                    </div>
+                <div class="auth-box">
+                    {% if first_user %}
+                        <h2>Create Admin Account</h2>
+                        <p class="auth-switch" style="color: var(--accent);">
+                            🎉 First account is automatically set as Admin
+                        </p>
+                    {% else %}
+                        <h2>Create New User</h2>
+                        <p class="auth-switch">
+                            <a href="/admin/users">← Back to user management</a>
+                        </p>
                     {% endif %}
 
-                    <button type="submit" class="btn btn-primary btn-full">
-                        {% if first_user %}Create Admin Account{% else %}Create User{% endif %}
-                    </button>
-                </form>
+                    {% if error %}
+                        <div class="error-message">{{ error }}</div>
+                    {% endif %}
+
+                    <form action="/register" method="POST">
+                        <div class="form-group">
+                            <label>Username</label>
+                            <input type="text" name="username" required autofocus
+                                   placeholder="Choose a username" />
+                        </div>
+                        <div class="form-group">
+                            <label>Password</label>
+                            <input type="password" name="password" required
+                                   placeholder="At least 4 characters" />
+                        </div>
+                        <div class="form-group">
+                            <label>Confirm Password</label>
+                            <input type="password" name="confirm" required
+                                   placeholder="Type password again" />
+                        </div>
+
+                        {% if not first_user %}
+                        <div class="form-group">
+                            <label>Role</label>
+                            <select name="role">
+                                <option value="member">Member</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        {% endif %}
+
+                        <button type="submit" class="btn btn-primary btn-full">
+                            {% if first_user %}Create Admin Account{% else %}Create User{% endif %}
+                        </button>
+                    </form>
+
+                    {% if first_user %}
+                        <p class="auth-footer-note">
+                            Already created an account?
+                            <a href="/login">Go to login</a>
+                        </p>
+                    {% endif %}
+                </div>
             </div>
         </div>
+
+        <script src="/static/js/app.js"></script>
     </body>
 </html>

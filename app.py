@@ -4,12 +4,13 @@ from database import (init_db, upgrade_db, save_file, get_all_files, get_file_by
                       search_files, get_files_by_folder, get_files_by_owner,
                       get_shared_files, toggle_shared,
                       create_user, check_login, get_all_users,
-                      get_user_by_id, count_users)
+                      get_user_by_id, count_users, get_storage_stats)
 from thumbnailer import generate_thumbnail
 from datetime import datetime
 from functools import wraps
 import os
 import uuid
+import mimetypes
 
 app = Flask(__name__)
 app.secret_key = 'homevault-secret-key-change-this-later'
@@ -19,9 +20,13 @@ app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, 'storage')
 app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024
 
 
-# ─── Helpers ──────────────────────────────────────────────────
+# helper stuff
 
 def get_folder(filename):
+    """
+    Decides which category a file belongs to based on its extension.
+    For example: photo.jpg → 'Photos', report.pdf → 'Documents'
+    """
     ext = filename.rsplit('.', 1)[-1].lower()
     photos    = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'heic']
     videos    = ['mp4', 'mkv', 'mov', 'avi', 'webm', 'flv']
@@ -33,6 +38,10 @@ def get_folder(filename):
 
 
 def format_size(bytes):
+    """
+    Converts bytes to human-readable sizes like '4.2 MB' or '1.5 GB'.
+    Used in templates to display file sizes nicely.
+    """
     if bytes < 1024:
         return str(bytes) + ' B'
     elif bytes < 1024 * 1024:
@@ -42,10 +51,15 @@ def format_size(bytes):
     else:
         return str(round(bytes / (1024 * 1024 * 1024), 2)) + ' GB'
 
+# so templates can use format_size without passing every time
 app.jinja_env.globals['format_size'] = format_size
 
 
 def ensure_folders():
+    """
+    Creates the required storage folders if they don't exist yet.
+    Runs once at startup so uploads never fail due to missing directories.
+    """
     folders = [
         os.path.join(BASE_DIR, 'storage', 'Photos'),
         os.path.join(BASE_DIR, 'storage', 'Videos'),
@@ -57,7 +71,8 @@ def ensure_folders():
         os.makedirs(folder, exist_ok=True)
 
 
-# ─── Login required decorator ─────────────────────────────────
+# login check decorator
+# this just wraps route and sends user to login if session is not there
 
 def login_required(f):
     @wraps(f)
@@ -79,11 +94,11 @@ def admin_required(f):
     return decorated
 
 
-# ─── Auth routes ──────────────────────────────────────────────
+# auth routes
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    # If already logged in go to home
+    # if already logged in then send to home
     if 'user_id' in session:
         return redirect(url_for('home'))
 
@@ -108,8 +123,8 @@ def login():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    # Only allow registration if no users exist yet (first user = admin)
-    # After that only admin can create users
+    # first user can register normally
+    # after that only admin should create more users
     first_user = count_users() == 0
 
     if not first_user and session.get('role') != 'admin':
@@ -130,7 +145,7 @@ def register():
         elif len(password) < 4:
             error = 'Password must be at least 4 characters'
         else:
-            # First user always becomes admin
+            # first account should be admin
             if first_user:
                 role = 'admin'
 
@@ -140,7 +155,7 @@ def register():
                 error = 'Username already taken'
             else:
                 if first_user:
-                    # Log in automatically after first registration
+                    # just login directly after first signup
                     session['user_id']  = user_id
                     session['username'] = username
                     session['role']     = 'admin'
@@ -151,13 +166,13 @@ def register():
     return render_template('register.html', error=error, first_user=first_user)
 
 
-@app.route('/logout')
+@app.route('/logout', methods=['POST'])
 def logout():
     session.clear()
     return redirect(url_for('login'))
 
 
-# ─── Main routes ──────────────────────────────────────────────
+# main routes
 
 @app.route('/')
 @login_required
@@ -169,7 +184,7 @@ def home():
     user_id = session['user_id']
     role    = session['role']
 
-    # Admins can switch between views
+    # admin can view more options
     if role == 'admin' and view == 'all':
         if query:
             files = search_files(query)
@@ -186,7 +201,7 @@ def home():
         else:
             files = get_shared_files()
 
-    else:  # 'mine' - default for everyone
+    else:  # default view
         if query:
             files = search_files(query, owner_id=user_id)
         elif folder:
@@ -194,11 +209,19 @@ def home():
         else:
             files = get_files_by_owner(user_id)
 
+    # stats for right panel
+    # mine means only current user stats, else admin can see all
+    if view == 'mine' or role != 'admin':
+        stats = get_storage_stats(owner_id=user_id)
+    else:
+        stats = get_storage_stats()
+
     return render_template('index.html',
                            files=files,
                            query=query,
                            folder=folder,
-                           view=view)
+                           view=view,
+                           stats=stats)
 
 
 @app.route('/upload', methods=['POST'])
@@ -209,7 +232,7 @@ def upload():
     is_shared = 1 if request.form.get('is_shared') else 0
 
     if not files or files[0].filename == '':
-        return 'No file selected'
+        return redirect(url_for('home'))
 
     for file in files:
         if file.filename == '':
@@ -249,15 +272,68 @@ def download(file_id):
     if file is None:
         return 'File not found', 404
 
-    # Members can only download their own files or shared files
+    # file in trash should not open from here
+    if file['is_deleted']:
+        return 'File not found', 404
+
+    # member can only download own or shared file
     if role != 'admin' and file['owner_id'] != user_id and not file['is_shared']:
         return 'Access denied', 403
 
     file_path = os.path.join(BASE_DIR, 'storage', file['folder'], file['filename'])
+
+    if not os.path.exists(file_path):
+        return 'File not found on disk', 404
+
     return send_file(file_path, download_name=file['original_name'], as_attachment=True)
 
 
-@app.route('/delete/<int:file_id>')
+
+
+@app.route('/preview/<int:file_id>')
+@login_required
+def preview(file_id):
+    file    = get_file_by_id(file_id)
+    user_id = session['user_id']
+    role    = session['role']
+
+    if file is None:
+        return 'File not found', 404
+
+    # if in trash then no preview
+    if file['is_deleted']:
+        return 'File not found', 404
+
+    # same permission rule like download
+    if role != 'admin' and file['owner_id'] != user_id and not file['is_shared']:
+        return 'Access denied', 403
+
+    file_path = os.path.join(BASE_DIR, 'storage', file['folder'], file['filename'])
+
+    if not os.path.exists(file_path):
+        return 'File not found on disk', 404
+
+    # guess mime type from file extension
+    # browser uses this to know how to show/open it
+
+    mime_type, _ = mimetypes.guess_type(file_path)
+    if mime_type is None:
+        mime_type = 'application/octet-stream'
+
+    # false means show in browser, not force download
+    return send_file(
+        file_path,
+        mimetype=mime_type,
+        as_attachment=False,
+        download_name=file['original_name']
+    )
+
+
+
+# routes that change data
+# keeping these as POST is better
+
+@app.route('/delete/<int:file_id>', methods=['POST'])
 @login_required
 def delete(file_id):
     file    = get_file_by_id(file_id)
@@ -267,7 +343,7 @@ def delete(file_id):
     if file is None:
         return redirect(url_for('home'))
 
-    # Members can only delete their own files
+    # member should only delete own file
     if role != 'admin' and file['owner_id'] != user_id:
         return 'Access denied', 403
 
@@ -275,7 +351,7 @@ def delete(file_id):
     return redirect(url_for('home'))
 
 
-@app.route('/share/<int:file_id>')
+@app.route('/share/<int:file_id>', methods=['POST'])
 @login_required
 def share(file_id):
     file    = get_file_by_id(file_id)
@@ -285,6 +361,10 @@ def share(file_id):
     if file is None:
         return redirect(url_for('home'))
 
+    # trashed file should not be shared
+    if file['is_deleted']:
+        return redirect(url_for('home'))
+
     if role != 'admin' and file['owner_id'] != user_id:
         return 'Access denied', 403
 
@@ -292,7 +372,7 @@ def share(file_id):
     return redirect(url_for('home'))
 
 
-# ─── Trash routes ─────────────────────────────────────────────
+# trash routes
 
 @app.route('/trash')
 @login_required
@@ -308,7 +388,7 @@ def trash():
     return render_template('trash.html', files=files)
 
 
-@app.route('/restore/<int:file_id>')
+@app.route('/restore/<int:file_id>', methods=['POST'])
 @login_required
 def restore(file_id):
     file    = get_file_by_id(file_id)
@@ -325,7 +405,7 @@ def restore(file_id):
     return redirect(url_for('trash'))
 
 
-@app.route('/permanent_delete/<int:file_id>')
+@app.route('/permanent_delete/<int:file_id>', methods=['POST'])
 @login_required
 def permanent_delete(file_id):
     file    = get_file_by_id(file_id)
@@ -352,7 +432,7 @@ def permanent_delete(file_id):
     return redirect(url_for('trash'))
 
 
-# ─── Admin routes ─────────────────────────────────────────────
+# admin routes
 
 @app.route('/admin/users')
 @admin_required
@@ -365,6 +445,10 @@ def admin_users():
 @admin_required
 def admin_view_user(user_id):
     user  = get_user_by_id(user_id)
+
+    if user is None:
+        return 'User not found', 404
+
     files = get_files_by_owner(user_id)
     return render_template('admin_view_user.html', user=user, files=files)
 

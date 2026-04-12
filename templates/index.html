@@ -1,161 +1,282 @@
-<!doctype html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>HomeVault</title>
-        <link rel="stylesheet" href="/static/css/style.css" />
-    </head>
-    <body>
-        <div class="container">
+{% extends "base.html" %}
 
-            <div class="top-bar">
-                <div>
-                    <h1>HomeVault</h1>
-                    <p>Your personal file storage system</p>
-                </div>
-                <div>
-                    <span style="margin-right: 15px; color: #555;">
-                        Logged in as <strong>{{ session['username'] }}</strong>
-                        ({{ session['role'] }})
-                    </span>
-                    {% if session['role'] == 'admin' %}
-                        <a href="/admin/users" class="btn btn-primary">Manage Users</a>
+{% block title_suffix %} — Dashboard{% endblock %}
+
+{% block content %}
+
+    {# search bar #}
+    <div class="search-bar">
+        <form action="/" method="GET">
+            <input type="hidden" name="view" value="{{ view }}" />
+            <div class="search-input-wrapper">
+                <span class="search-icon">&#128269;</span>
+                <input type="text"
+                       name="search"
+                       value="{{ query }}"
+                       placeholder="Search files by name..."
+                       class="search-input" />
+            </div>
+            <button type="submit" class="btn btn-primary">Search</button>
+            {% if query %}
+                <a href="/?view={{ view }}" class="btn btn-ghost">Clear</a>
+            {% endif %}
+        </form>
+    </div>
+
+    {# top tabs #}
+    <div class="view-tabs">
+        <a href="/?view=mine" class="view-tab {% if view == 'mine' %}active{% endif %}">
+            My Files
+        </a>
+        <a href="/?view=shared" class="view-tab {% if view == 'shared' %}active{% endif %}">
+            Shared
+        </a>
+        {% if session['role'] == 'admin' %}
+        <a href="/?view=all" class="view-tab {% if view == 'all' %}active{% endif %}">
+            All Files
+        </a>
+        {% endif %}
+    </div>
+
+    {# category cards #}
+    <h3 class="section-title">Categories</h3>
+    <div class="categories-grid">
+        <a href="/?view={{ view }}&folder=Photos" class="category-card photos">
+            <span class="cat-icon">&#128247;</span>
+            <div class="cat-name">Photos</div>
+            <div class="cat-count">{{ stats['categories']['Photos']['count'] }} files</div>
+        </a>
+        <a href="/?view={{ view }}&folder=Documents" class="category-card documents">
+            <span class="cat-icon">&#128196;</span>
+            <div class="cat-name">Documents</div>
+            <div class="cat-count">{{ stats['categories']['Documents']['count'] }} files</div>
+        </a>
+        <a href="/?view={{ view }}&folder=Videos" class="category-card videos">
+            <span class="cat-icon">&#127916;</span>
+            <div class="cat-name">Videos</div>
+            <div class="cat-count">{{ stats['categories']['Videos']['count'] }} files</div>
+        </a>
+        <a href="/?view={{ view }}&folder=Others" class="category-card others">
+            <span class="cat-icon">&#128230;</span>
+            <div class="cat-name">Others</div>
+            <div class="cat-count">{{ stats['categories']['Others']['count'] }} files</div>
+        </a>
+    </div>
+
+    {# filters and view buttons #}
+    <div style="display:flex; align-items:center; justify-content:space-between;
+                flex-wrap:wrap; gap:10px; margin-bottom:16px;">
+
+        <div class="filter-pills" style="margin-bottom:0;">
+            <a href="/?view={{ view }}" class="filter-pill {% if not folder %}active{% endif %}">All</a>
+            <a href="/?view={{ view }}&folder=Photos" class="filter-pill {% if folder == 'Photos' %}active{% endif %}">Photos</a>
+            <a href="/?view={{ view }}&folder=Videos" class="filter-pill {% if folder == 'Videos' %}active{% endif %}">Videos</a>
+            <a href="/?view={{ view }}&folder=Documents" class="filter-pill {% if folder == 'Documents' %}active{% endif %}">Documents</a>
+            <a href="/?view={{ view }}&folder=Others" class="filter-pill {% if folder == 'Others' %}active{% endif %}">Others</a>
+        </div>
+
+        {# list/grid buttons #}
+        <div class="view-toggle">
+            <button class="view-btn" id="viewList" title="List view">&#9776;</button>
+            <button class="view-btn" id="viewGrid" title="Grid view">&#9638;</button>
+        </div>
+
+    </div>
+
+    {# heading area #}
+    <div class="page-header">
+        {% if query %}
+            <h2>Search results for "{{ query }}" ({{ files|length }})</h2>
+        {% elif folder %}
+            <h2>{{ folder }} ({{ files|length }})</h2>
+        {% elif view == 'shared' %}
+            <h2>Shared Files ({{ files|length }})</h2>
+        {% elif view == 'all' %}
+            <h2>All Files ({{ files|length }})</h2>
+        {% else %}
+            <h2>Recent Files ({{ files|length }})</h2>
+        {% endif %}
+    </div>
+
+    {# file list #}
+    {% if files %}
+    <div class="file-list list-view" id="fileList">
+
+        <div class="file-list-header" id="fileListHeader">
+            <span></span>
+            <span>Name</span>
+            <span>Type</span>
+            <span>Size</span>
+            <span>Status</span>
+            <span></span>
+        </div>
+
+        {% for file in files %}
+        <div class="file-row">
+
+            {# icon or thumb #}
+            <div class="file-icon {{ file['file_type']|lower }}">
+                {% if file['file_type'] == 'Photos' %}
+                    <img src="/static/thumbnails/{{ file['id'] }}.jpg"
+                         alt="{{ file['original_name'] }}"
+                         onerror="this.style.display='none'; this.parentElement.textContent='&#128247;';">
+                {% elif file['file_type'] == 'Videos' %}
+                    &#127916;
+                {% elif file['file_type'] == 'Documents' %}
+                    &#128196;
+                {% else %}
+                    &#128230;
+                {% endif %}
+            </div>
+
+            {# file name #}
+            <div class="file-name" title="{{ file['original_name'] }}">
+                {{ file['original_name'] }}
+            </div>
+
+            {# extra columns #}
+            <div class="file-meta">{{ file['file_type'] }}</div>
+            <div class="file-meta">{{ format_size(file['file_size']) }}</div>
+            <div>
+                {% if file['is_shared'] %}
+                    <span class="share-badge shared">Public</span>
+                {% else %}
+                    <span class="share-badge private">Private</span>
+                {% endif %}
+            </div>
+
+            {# actions menu #}
+            <div class="menu-container">
+                <button class="menu-btn" onclick="toggleMenu(this)" title="Actions">&#8943;</button>
+                <div class="menu-dropdown">
+
+                    <button class="menu-item"
+                            onclick="handlePreview(this)"
+                            data-id="{{ file['id'] }}"
+                            data-type="{{ file['file_type'] }}"
+                            data-name="{{ file['original_name'] }}">
+                        <span class="menu-icon">&#128065;</span>
+                        Preview
+                    </button>
+
+                    <div class="menu-divider"></div>
+
+                    <a href="/download/{{ file['id'] }}" class="menu-item">
+                        <span class="menu-icon">&#11015;&#65039;</span>
+                        Download
+                    </a>
+
+                    {% if session['role'] == 'admin' or file['owner_id'] == session['user_id'] %}
+                    <form action="/share/{{ file['id'] }}" method="POST" class="hidden-form">
+                        <button type="submit" class="menu-item">
+                            <span class="menu-icon">&#128279;</span>
+                            {{ 'Unshare' if file['is_shared'] else 'Share' }}
+                        </button>
+                    </form>
+
+                    <div class="menu-divider"></div>
+
+                    <form action="/delete/{{ file['id'] }}" method="POST" class="hidden-form"
+                          onsubmit="return confirmAction('Move this file to trash?')">
+                        <button type="submit" class="menu-item danger">
+                            <span class="menu-icon">&#128465;&#65039;</span>
+                            Move to Trash
+                        </button>
+                    </form>
                     {% endif %}
-                    <a href="/logout" class="btn btn-danger">Logout</a>
+
                 </div>
             </div>
 
-            <h2>Upload a File</h2>
-            <div class="upload-form">
-                <form action="/upload" method="POST" enctype="multipart/form-data">
-                    <input type="file" name="file" multiple />
-                    <label style="margin-left: 15px;">
+        </div>
+        {% endfor %}
+
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">&#128194;</div>
+        <div class="empty-title">
+            {% if query %}No files found matching "{{ query }}"
+            {% elif view == 'shared' %}No shared files yet
+            {% else %}No files uploaded yet{% endif %}
+        </div>
+        <div class="empty-desc">
+            {% if not query and view != 'shared' %}
+                Upload your first file using the panel on the right
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+{% endblock %}
+
+
+{% block right_panel %}
+    <aside class="right-panel">
+
+        <form id="upload-form" action="/upload" method="POST" enctype="multipart/form-data">
+            <div class="upload-zone">
+                <div class="upload-icon">&#11014;&#65039;</div>
+                <div class="upload-text">Drop files here or click to browse</div>
+                <div class="upload-hint">Max 500 MB per file</div>
+                <input type="file" name="file" id="file-input" multiple />
+                <div class="upload-options">
+                    <label>
                         <input type="checkbox" name="is_shared" />
                         Share with everyone
                     </label>
-                    <button type="submit" class="btn btn-primary" style="margin-left: 15px;">Upload</button>
-                </form>
+                </div>
+                <button type="submit" class="upload-btn">Upload Files</button>
+            </div>
+        </form>
+
+        <div class="storage-card">
+            <div class="storage-title">Your Storage</div>
+
+            {% set max_display = 1073741824 %}
+            {% set pct = ((stats['total_size'] / max_display) * 100) if stats['total_size'] > 0 else 0 %}
+            {% if pct > 100 %}{% set pct = 100 %}{% endif %}
+
+            <div class="storage-bar-bg">
+                <div class="storage-bar-fill" style="width: {{ pct|round(1) }}%"></div>
+            </div>
+            <div class="storage-info">
+                <span>{{ format_size(stats['total_size']) }} used</span>
+                <span>{{ stats['total_files'] }} files</span>
             </div>
 
-            <h2>Search Files</h2>
-            <div class="upload-form">
-                <form action="/" method="GET">
-                    <input type="hidden" name="view" value="{{ view }}" />
-                    <input type="text" name="search"
-                           value="{{ query }}"
-                           placeholder="Search by filename..."
-                           style="padding: 8px; width: 300px; margin-right: 10px;
-                                  border: 1px solid #ddd; border-radius: 5px;">
-                    <button type="submit" class="btn btn-primary">Search</button>
-                    {% if query %}
-                        <a href="/?view={{ view }}" class="btn btn-primary">Clear</a>
-                    {% endif %}
-                </form>
+            <div class="storage-breakdown">
+                <div class="storage-item">
+                    <div class="item-label">
+                        <span class="item-dot" style="background: var(--cat-photos);"></span>
+                        Photos
+                    </div>
+                    <span class="item-count">{{ stats['categories']['Photos']['count'] }} &middot; {{ format_size(stats['categories']['Photos']['size']) }}</span>
+                </div>
+                <div class="storage-item">
+                    <div class="item-label">
+                        <span class="item-dot" style="background: var(--cat-documents);"></span>
+                        Documents
+                    </div>
+                    <span class="item-count">{{ stats['categories']['Documents']['count'] }} &middot; {{ format_size(stats['categories']['Documents']['size']) }}</span>
+                </div>
+                <div class="storage-item">
+                    <div class="item-label">
+                        <span class="item-dot" style="background: var(--cat-videos);"></span>
+                        Videos
+                    </div>
+                    <span class="item-count">{{ stats['categories']['Videos']['count'] }} &middot; {{ format_size(stats['categories']['Videos']['size']) }}</span>
+                </div>
+                <div class="storage-item">
+                    <div class="item-label">
+                        <span class="item-dot" style="background: var(--cat-others);"></span>
+                        Others
+                    </div>
+                    <span class="item-count">{{ stats['categories']['Others']['count'] }} &middot; {{ format_size(stats['categories']['Others']['size']) }}</span>
+                </div>
             </div>
-
-            <!-- View tabs -->
-            <div class="filter-buttons">
-                <a href="/?view=mine"
-                   class="btn {% if view == 'mine' %}btn-active{% else %}btn-primary{% endif %}">
-                    My Files
-                </a>
-                <a href="/?view=shared"
-                   class="btn {% if view == 'shared' %}btn-active{% else %}btn-primary{% endif %}">
-                    Shared
-                </a>
-                {% if session['role'] == 'admin' %}
-                <a href="/?view=all"
-                   class="btn {% if view == 'all' %}btn-active{% else %}btn-primary{% endif %}">
-                    All Files
-                </a>
-                {% endif %}
-                <a href="/trash" class="btn btn-danger">Trash</a>
-            </div>
-
-            <!-- Folder filter -->
-            <div class="filter-buttons">
-                <a href="/?view={{ view }}"
-                   class="btn {% if not folder %}btn-active{% else %}btn-primary{% endif %}">All</a>
-                <a href="/?view={{ view }}&folder=Photos"
-                   class="btn {% if folder == 'Photos' %}btn-active{% else %}btn-primary{% endif %}">Photos</a>
-                <a href="/?view={{ view }}&folder=Videos"
-                   class="btn {% if folder == 'Videos' %}btn-active{% else %}btn-primary{% endif %}">Videos</a>
-                <a href="/?view={{ view }}&folder=Documents"
-                   class="btn {% if folder == 'Documents' %}btn-active{% else %}btn-primary{% endif %}">Documents</a>
-                <a href="/?view={{ view }}&folder=Others"
-                   class="btn {% if folder == 'Others' %}btn-active{% else %}btn-primary{% endif %}">Others</a>
-            </div>
-
-            {% if query %}
-                <h2>Search results for "{{ query }}" ({{ files|length }} found)</h2>
-            {% elif folder %}
-                <h2>{{ folder }} ({{ files|length }})</h2>
-            {% elif view == 'shared' %}
-                <h2>Shared Files ({{ files|length }})</h2>
-            {% elif view == 'all' %}
-                <h2>All Files ({{ files|length }})</h2>
-            {% else %}
-                <h2>My Files ({{ files|length }})</h2>
-            {% endif %}
-
-            {% if files %}
-            <table class="files-table">
-                <tr>
-                    <th>Preview</th>
-                    <th>Name</th>
-                    <th>Type</th>
-                    <th>Size</th>
-                    <th>Date</th>
-                    <th>Shared</th>
-                    <th>Action</th>
-                </tr>
-
-                {% for file in files %}
-                <tr>
-                    <td>
-                        {% if file['file_type'] == 'Photos' %}
-                            <img src="/static/thumbnails/{{ file['id'] }}.jpg"
-                                 width="60" height="60"
-                                 style="object-fit: cover; border-radius: 4px;">
-                        {% else %}
-                            <div style="width:60px; height:60px; background:#eee;
-                                        border-radius:4px; display:flex; align-items:center;
-                                        justify-content:center; font-size:24px;">
-                                {% if file['file_type'] == 'Videos' %}🎬
-                                {% elif file['file_type'] == 'Documents' %}📄
-                                {% else %}📁{% endif %}
-                            </div>
-                        {% endif %}
-                    </td>
-                    <td>{{ file['original_name'] }}</td>
-                    <td>{{ file['file_type'] }}</td>
-                    <td>{{ format_size(file['file_size']) }}</td>
-                    <td>{{ file['upload_date'] }}</td>
-                    <td>{{ 'Public' if file['is_shared'] else 'Private' }}</td>
-                    <td>
-                        <a href="/download/{{ file['id'] }}" class="btn btn-primary">Download</a>
-                        {% if session['role'] == 'admin' or file['owner_id'] == session['user_id'] %}
-                            <a href="/share/{{ file['id'] }}" class="btn btn-primary">
-                                {{ 'Unshare' if file['is_shared'] else 'Share' }}
-                            </a>
-                            <a href="/delete/{{ file['id'] }}" class="btn btn-danger"
-                               onclick="return confirm('Move to trash?')">Delete</a>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </table>
-            {% else %}
-            <div class="empty-message">
-                <p>
-                    {% if query %}No files found matching "{{ query }}"
-                    {% elif view == 'shared' %}No shared files yet.
-                    {% else %}No files uploaded yet.
-                    {% endif %}
-                </p>
-            </div>
-            {% endif %}
         </div>
-    </body>
-</html>
+
+    </aside>
+{% endblock %}

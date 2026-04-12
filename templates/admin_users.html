@@ -1,44 +1,53 @@
-<!doctype html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>HomeVault - Users</title>
-        <link rel="stylesheet" href="/static/css/style.css" />
-    </head>
-    <body>
-        <div class="container">
-            <h1>HomeVault</h1>
+{#
+    admin users page
+    list of all users here
+    only admin should access this
+#}
+{% extends "base.html" %}
 
-            <div class="filter-buttons" style="margin-top: 20px;">
-                <a href="/" class="btn btn-primary">My Files</a>
-                <a href="/admin/users" class="btn btn-active">Manage Users</a>
-                <a href="/register" class="btn btn-primary">Add User</a>
-                <a href="/logout" class="btn btn-danger">Logout</a>
-            </div>
+{% block title_suffix %} — Manage Users{% endblock %}
 
-            <h2>All Users ({{ users|length }})</h2>
+{% block content %}
 
-            {% if users %}
-            <table class="files-table">
-                <tr>
-                    <th>Username</th>
-                    <th>Role</th>
-                    <th>Created</th>
-                    <th>Action</th>
-                </tr>
-                {% for user in users %}
-                <tr>
-                    <td>{{ user['username'] }}</td>
-                    <td>{{ user['role'] }}</td>
-                    <td>{{ user['created_at'] }}</td>
-                    <td>
-                        <a href="/admin/user/{{ user['id'] }}" class="btn btn-primary">View Files</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </table>
-            {% endif %}
+    <div class="page-header header-with-actions">
+        <div>
+            <h2>👥 Manage Users ({{ users|length }})</h2>
+            <p>View and manage all registered accounts</p>
         </div>
-    </body>
-</html>
+        <a href="/register" class="btn btn-primary">+ Add User</a>
+    </div>
+
+    {% if users %}
+    <table class="admin-table">
+        <tr>
+            <th>Username</th>
+            <th>Role</th>
+            <th>Created</th>
+            <th>Action</th>
+        </tr>
+        {% for user in users %}
+        <tr>
+            <td style="font-weight: 500;">{{ user['username'] }}</td>
+            <td>
+                <span class="role-badge {{ user['role'] }}">
+                    {{ user['role']|capitalize }}
+                </span>
+            </td>
+            <td style="color: var(--text-secondary);">{{ user['created_at'][:10] }}</td>
+            <td>
+                <a href="/admin/user/{{ user['id'] }}" class="btn btn-ghost btn-sm">
+                    View Files
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">👤</div>
+        <div class="empty-title">No users yet</div>
+        <div class="empty-desc">Create the first user account to get started.</div>
+    </div>
+    {% endif %}
+
+{% endblock %}
