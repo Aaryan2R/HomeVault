@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title_suffix %} — Settings{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <h2>&#9881;&#65039; Settings</h2>
+    <p>Manage your account and preferences</p>
+</div>
+
+<!-- Tab buttons -->
+<div style="display:flex; gap:4px; background:var(--bg-card);
+            padding:4px; border-radius:10px; width:fit-content;
+            margin-bottom:24px; border:1px solid var(--border-color);">
+    <button onclick="showTab('account')" id="tab-account"
+            class="settings-tab active-tab">
+        &#128100; Account
+    </button>
+    <button onclick="showTab('appearance')" id="tab-appearance"
+            class="settings-tab">
+        &#127774; Appearance
+    </button>
+    <button onclick="showTab('storage')" id="tab-storage"
+            class="settings-tab">
+        &#128190; Storage
+    </button>
+</div>
+
+<!-- Account Tab -->
+<div id="panel-account">
+
+    {% if error and tab == 'account' %}
+    <div class="error-message" style="max-width:480px; margin-bottom:16px;">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    {% if success %}
+    <div style="background:rgba(22,163,74,0.1); border:1px solid rgba(22,163,74,0.2);
+                color:var(--success); padding:10px 14px; border-radius:8px;
+                font-size:13px; max-width:480px; margin-bottom:16px;">
+        {{ success }}
+    </div>
+    {% endif %}
+
+    <div style="background:var(--bg-card); border:1px solid var(--border-color);
+                border-radius:12px; padding:24px; max-width:480px;">
+
+        <h3 style="font-size:15px; font-weight:600; color:var(--text-primary);
+                   margin-bottom:18px;">Account Info</h3>
+
+        <div style="margin-bottom:14px;">
+            <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">Username</div>
+            <div style="font-size:15px; font-weight:500; color:var(--text-primary);">
+                {{ user['username'] }}
+            </div>
+        </div>
+
+        <div style="margin-bottom:20px;">
+            <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">Role</div>
+            <span class="role-badge {{ user['role'] }}">{{ user['role']|capitalize }}</span>
+        </div>
+
+        <div style="margin-bottom:20px;">
+            <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">Member since</div>
+            <div style="font-size:14px; color:var(--text-primary);">{{ user['created_at'][:10] }}</div>
+        </div>
+
+        <hr style="border:none; border-top:1px solid var(--border-color); margin-bottom:20px;">
+
+        <h3 style="font-size:15px; font-weight:600; color:var(--text-primary);
+                   margin-bottom:16px;">Change Password</h3>
+
+        <form action="/settings/change_password" method="POST">
+            <div class="form-group">
+                <label>Current Password</label>
+                <input type="password" name="current_password"
+                       class="form-group input" required
+                       style="width:100%; padding:9px 12px; border:1px solid var(--border-color);
+                              border-radius:8px; background:var(--bg-primary);
+                              color:var(--text-primary); font-size:14px; font-family:inherit;"/>
+            </div>
+            <div class="form-group">
+                <label>New Password</label>
+                <input type="password" name="new_password"
+                       required minlength="4"
+                       style="width:100%; padding:9px 12px; border:1px solid var(--border-color);
+                              border-radius:8px; background:var(--bg-primary);
+                              color:var(--text-primary); font-size:14px; font-family:inherit;"/>
+            </div>
+            <div class="form-group">
+                <label>Confirm New Password</label>
+                <input type="password" name="confirm_password"
+                       required minlength="4"
+                       style="width:100%; padding:9px 12px; border:1px solid var(--border-color);
+                              border-radius:8px; background:var(--bg-primary);
+                              color:var(--text-primary); font-size:14px; font-family:inherit;"/>
+            </div>
+            <button type="submit" class="btn btn-primary">Update Password</button>
+        </form>
+
+    </div>
+</div>
+
+<!-- Appearance Tab -->
+<div id="panel-appearance" style="display:none;">
+    <div style="background:var(--bg-card); border:1px solid var(--border-color);
+                border-radius:12px; padding:24px; max-width:480px;">
+
+        <h3 style="font-size:15px; font-weight:600; margin-bottom:18px;">Theme</h3>
+
+        <div style="display:flex; align-items:center; justify-content:space-between;
+                    padding:14px 0; border-bottom:1px solid var(--border-color);">
+            <div>
+                <div style="font-size:14px; font-weight:500; color:var(--text-primary);">Dark Mode</div>
+                <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+                    Switch between light and dark theme
+                </div>
+            </div>
+            <label class="toggle-switch">
+                <input type="checkbox" class="theme-checkbox" onchange="toggleTheme()">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+
+        <div style="padding:14px 0;">
+            <div style="font-size:12px; color:var(--text-muted);">
+                Your theme preference is saved automatically and remembered across sessions.
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Storage Tab -->
+<div id="panel-storage" style="display:none;">
+    <div style="background:var(--bg-card); border:1px solid var(--border-color);
+                border-radius:12px; padding:24px; max-width:480px;">
+
+        <h3 style="font-size:15px; font-weight:600; margin-bottom:18px;">
+            Your Storage Usage
+        </h3>
+
+        {% set max_display = 1073741824 %}
+        {% set pct = ((stats['total_size'] / max_display) * 100) if stats['total_size'] > 0 else 0 %}
+        {% if pct > 100 %}{% set pct = 100 %}{% endif %}
+
+        <div style="font-size:13px; color:var(--text-muted); margin-bottom:8px;">
+            {{ format_size(stats['total_size']) }} used &middot; {{ stats['total_files'] }} files
+        </div>
+
+        <div class="storage-bar-bg" style="margin-bottom:20px;">
+            <div class="storage-bar-fill" style="width:{{ pct|round(1) }}%"></div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px;">
+            {% for cat, color in [('Photos','var(--cat-photos)'),
+                                   ('Videos','var(--cat-videos)'),
+                                   ('Documents','var(--cat-documents)'),
+                                   ('Others','var(--cat-others)')] %}
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="width:8px; height:8px; border-radius:50%;
+                                 background:{{ color }}; display:inline-block;"></span>
+                    <span style="font-size:13px; color:var(--text-primary);">{{ cat }}</span>
+                </div>
+                <span style="font-size:13px; color:var(--text-muted);">
+                    {{ stats['categories'][cat]['count'] }} files &middot;
+                    {{ format_size(stats['categories'][cat]['size']) }}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+
+    </div>
+</div>
+
+<!-- Tab switching JavaScript -->
+<script>
+function showTab(name) {
+    var panels = ['account', 'appearance', 'storage'];
+    for (var i = 0; i < panels.length; i++) {
+        var panel = document.getElementById('panel-' + panels[i]);
+        var tab   = document.getElementById('tab-' + panels[i]);
+        if (panels[i] === name) {
+            panel.style.display = 'block';
+            tab.classList.add('active-tab');
+        } else {
+            panel.style.display = 'none';
+            tab.classList.remove('active-tab');
+        }
+    }
+}
+
+// Open correct tab if server sent one back after form submit
+{% if tab %}
+showTab('{{ tab }}');
+{% endif %}
+</script>
+
+{% endblock %}

@@ -1,53 +1,95 @@
-{#
-    admin users page
-    list of all users here
-    only admin should access this
-#}
 {% extends "base.html" %}
 
-{% block title_suffix %} — Manage Users{% endblock %}
+{% block title_suffix %} — Admin Panel{% endblock %}
 
 {% block content %}
 
-    <div class="page-header header-with-actions">
-        <div>
-            <h2>👥 Manage Users ({{ users|length }})</h2>
-            <p>View and manage all registered accounts</p>
-        </div>
-        <a href="/register" class="btn btn-primary">+ Add User</a>
+<div class="page-header header-with-actions">
+    <div>
+        <h2>&#128101; Admin Panel</h2>
+        <p>Manage users and monitor storage</p>
+    </div>
+    <a href="/register" class="btn btn-primary">+ Add User</a>
+</div>
+
+<!-- Stats Cards -->
+<div style="display:grid; grid-template-columns:repeat(4,1fr);
+            gap:14px; margin-bottom:28px;">
+
+    <div style="background:var(--bg-card); border:1px solid var(--border-color);
+                border-radius:12px; padding:18px;">
+        <div style="font-size:11px; font-weight:600; color:var(--text-muted);
+                    text-transform:uppercase; letter-spacing:0.5px;">Total Users</div>
+        <div style="font-size:28px; font-weight:700; color:var(--text-primary);
+                    margin-top:6px;">{{ stats['total_users'] }}</div>
     </div>
 
-    {% if users %}
-    <table class="admin-table">
-        <tr>
-            <th>Username</th>
-            <th>Role</th>
-            <th>Created</th>
-            <th>Action</th>
-        </tr>
-        {% for user in users %}
-        <tr>
-            <td style="font-weight: 500;">{{ user['username'] }}</td>
-            <td>
-                <span class="role-badge {{ user['role'] }}">
-                    {{ user['role']|capitalize }}
-                </span>
-            </td>
-            <td style="color: var(--text-secondary);">{{ user['created_at'][:10] }}</td>
-            <td>
-                <a href="/admin/user/{{ user['id'] }}" class="btn btn-ghost btn-sm">
-                    View Files
-                </a>
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
-    {% else %}
-    <div class="empty-state">
-        <div class="empty-icon">👤</div>
-        <div class="empty-title">No users yet</div>
-        <div class="empty-desc">Create the first user account to get started.</div>
+    <div style="background:var(--bg-card); border:1px solid var(--border-color);
+                border-radius:12px; padding:18px;">
+        <div style="font-size:11px; font-weight:600; color:var(--text-muted);
+                    text-transform:uppercase; letter-spacing:0.5px;">Total Files</div>
+        <div style="font-size:28px; font-weight:700; color:var(--text-primary);
+                    margin-top:6px;">{{ stats['total_files'] }}</div>
     </div>
-    {% endif %}
+
+    <div style="background:var(--bg-card); border:1px solid var(--border-color);
+                border-radius:12px; padding:18px;">
+        <div style="font-size:11px; font-weight:600; color:var(--text-muted);
+                    text-transform:uppercase; letter-spacing:0.5px;">Storage Used</div>
+        <div style="font-size:28px; font-weight:700; color:var(--text-primary);
+                    margin-top:6px;">{{ format_size(stats['total_size']) }}</div>
+    </div>
+
+    <div style="background:var(--bg-card); border:1px solid var(--border-color);
+                border-radius:12px; padding:18px;">
+        <div style="font-size:11px; font-weight:600; color:var(--text-muted);
+                    text-transform:uppercase; letter-spacing:0.5px;">In Trash</div>
+        <div style="font-size:28px; font-weight:700; color:var(--danger);
+                    margin-top:6px;">{{ stats['trash_count'] }}</div>
+    </div>
+
+</div>
+
+<!-- Users Table -->
+{% if stats['users'] %}
+<table class="admin-table">
+    <tr>
+        <th>User</th>
+        <th>Role</th>
+        <th>Files</th>
+        <th>Storage</th>
+        <th>Joined</th>
+        <th>Actions</th>
+    </tr>
+    {% for user in stats['users'] %}
+    <tr>
+        <td>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <div style="width:32px; height:32px; border-radius:50%;
+                            background:linear-gradient(135deg,var(--accent),#7c3aed);
+                            display:flex; align-items:center; justify-content:center;
+                            color:white; font-weight:700; font-size:13px; flex-shrink:0;">
+                    {{ user['username'][0]|upper }}
+                </div>
+                <span style="font-weight:500;">{{ user['username'] }}</span>
+            </div>
+        </td>
+        <td>
+            <span class="role-badge {{ user['role'] }}">
+                {{ user['role']|capitalize }}
+            </span>
+        </td>
+        <td style="color:var(--text-secondary);">{{ user['file_count'] }} files</td>
+        <td style="color:var(--text-secondary);">{{ format_size(user['total_size']) }}</td>
+        <td style="color:var(--text-secondary);">{{ user['created_at'][:10] }}</td>
+        <td>
+            <a href="/admin/user/{{ user['id'] }}" class="btn btn-ghost btn-sm">
+                View Files
+            </a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% endif %}
 
 {% endblock %}

@@ -12,6 +12,19 @@ def get_db():
     return conn
 
 
+def get_order_clause(sort):
+    # map sort key from URL to safe SQL order text
+    orders = {
+        'date_desc': 'upload_date DESC',
+        'date_asc':  'upload_date ASC',
+        'name_asc':  'original_name ASC',
+        'name_desc': 'original_name DESC',
+        'size_desc': 'file_size DESC',
+        'size_asc':  'file_size ASC',
+    }
+    return orders.get(sort, 'upload_date DESC')
+
+
 def init_db():
     conn = get_db()
     cursor = conn.cursor()
@@ -115,6 +128,17 @@ def get_user_by_id(user_id):
     return user
 
 
+def get_username_by_id(user_id):
+    if user_id is None:
+        return 'Unknown'
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('SELECT username FROM users WHERE id = ?', (user_id,))
+    user = cursor.fetchone()
+    conn.close()
+    return user['username'] if user else 'Unknown'
+
+
 def get_all_users():
     conn = get_db()
     cursor = conn.cursor()
@@ -159,37 +183,40 @@ def save_file(filename, original_name, file_type, file_size, folder, upload_date
     return file_id
 
 
-def get_all_files():
+def get_all_files(sort='date_desc'):
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute('''
-        SELECT * FROM files WHERE is_deleted = 0 ORDER BY upload_date DESC
+    order = get_order_clause(sort)
+    cursor.execute(f'''
+        SELECT * FROM files WHERE is_deleted = 0 ORDER BY {order}
     ''')
     files = cursor.fetchall()
     conn.close()
     return files
 
 
-def get_files_by_owner(owner_id):
+def get_files_by_owner(owner_id, sort='date_desc'):
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute('''
+    order = get_order_clause(sort)
+    cursor.execute(f'''
         SELECT * FROM files 
         WHERE owner_id = ? AND is_deleted = 0 
-        ORDER BY upload_date DESC
+        ORDER BY {order}
     ''', (owner_id,))
     files = cursor.fetchall()
     conn.close()
     return files
 
 
-def get_shared_files():
+def get_shared_files(sort='date_desc'):
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute('''
+    order = get_order_clause(sort)
+    cursor.execute(f'''
         SELECT * FROM files 
         WHERE is_shared = 1 AND is_deleted = 0 
-        ORDER BY upload_date DESC
+        ORDER BY {order}
     ''')
     files = cursor.fetchall()
     conn.close()
@@ -205,21 +232,22 @@ def get_file_by_id(file_id):
     return file
 
 
-def get_files_by_folder(folder, owner_id=None):
+def get_files_by_folder(folder, owner_id=None, sort='date_desc'):
     conn = get_db()
     cursor = conn.cursor()
+    order = get_order_clause(sort)
 
     if owner_id:
-        cursor.execute('''
+        cursor.execute(f'''
             SELECT * FROM files
             WHERE folder = ? AND owner_id = ? AND is_deleted = 0
-            ORDER BY upload_date DESC
+            ORDER BY {order}
         ''', (folder, owner_id))
     else:
-        cursor.execute('''
+        cursor.execute(f'''
             SELECT * FROM files
             WHERE folder = ? AND is_deleted = 0
-            ORDER BY upload_date DESC
+            ORDER BY {order}
         ''', (folder,))
 
     files = cursor.fetchall()
@@ -227,21 +255,22 @@ def get_files_by_folder(folder, owner_id=None):
     return files
 
 
-def search_files(query, owner_id=None):
+def search_files(query, owner_id=None, sort='date_desc'):
     conn = get_db()
     cursor = conn.cursor()
+    order = get_order_clause(sort)
 
     if owner_id:
-        cursor.execute('''
+        cursor.execute(f'''
             SELECT * FROM files
             WHERE original_name LIKE ? AND owner_id = ? AND is_deleted = 0
-            ORDER BY upload_date DESC
+            ORDER BY {order}
         ''', ('%' + query + '%', owner_id))
     else:
-        cursor.execute('''
+        cursor.execute(f'''
             SELECT * FROM files
             WHERE original_name LIKE ? AND is_deleted = 0
-            ORDER BY upload_date DESC
+            ORDER BY {order}
         ''', ('%' + query + '%',))
 
     files = cursor.fetchall()
@@ -334,6 +363,55 @@ def toggle_shared(file_id):
     cursor.execute('UPDATE files SET is_shared = ? WHERE id = ?', (new_value, file_id))
     conn.commit()
     conn.close()
+
+
+def rename_file(file_id, new_name):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        UPDATE files SET original_name = ?
+        WHERE id = ?
+    ''', (new_name, file_id))
+    conn.commit()
+    conn.close()
+
+
+def get_admin_stats():
+    conn   = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute('SELECT COUNT(*) FROM users')
+    total_users = cursor.fetchone()[0]
+
+    cursor.execute('SELECT COUNT(*) FROM files WHERE is_deleted = 0')
+    total_files = cursor.fetchone()[0]
+
+    cursor.execute('SELECT COALESCE(SUM(file_size), 0) FROM files WHERE is_deleted = 0')
+    total_size = cursor.fetchone()[0]
+
+    cursor.execute('SELECT COUNT(*) FROM files WHERE is_deleted = 1')
+    trash_count = cursor.fetchone()[0]
+
+    cursor.execute('''
+        SELECT u.id, u.username, u.role, u.created_at,
+               COUNT(f.id) as file_count,
+               COALESCE(SUM(f.file_size), 0) as total_size
+        FROM users u
+        LEFT JOIN files f ON f.owner_id = u.id AND f.is_deleted = 0
+        GROUP BY u.id
+        ORDER BY u.created_at
+    ''')
+    users = cursor.fetchall()
+
+    conn.close()
+
+    return {
+        'total_users': total_users,
+        'total_files': total_files,
+        'total_size':  total_size,
+        'trash_count': trash_count,
+        'users':       users
+    }
 
 
 # storage stats

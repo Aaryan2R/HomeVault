@@ -4,9 +4,10 @@ from database import (init_db, upgrade_db, save_file, get_all_files, get_file_by
                       search_files, get_files_by_folder, get_files_by_owner,
                       get_shared_files, toggle_shared,
                       create_user, check_login, get_all_users,
-                      get_user_by_id, count_users, get_storage_stats)
+                      get_user_by_id, get_username_by_id, count_users,
+                      get_storage_stats, rename_file, get_admin_stats, get_db)
 from thumbnailer import generate_thumbnail
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import wraps
 import os
 import uuid
@@ -51,8 +52,72 @@ def format_size(bytes):
     else:
         return str(round(bytes / (1024 * 1024 * 1024), 2)) + ' GB'
 
+
+def group_files_by_date(files, sort='date_desc'):
+    """
+    Splits files into simple date buckets so the dashboard is easier to scan.
+    """
+    today     = datetime.now().date()
+    yesterday = today - timedelta(days=1)
+    week_ago  = today - timedelta(days=7)
+    groups = {}
+
+    for file in files:
+        try:
+            if sort in ('exif_desc', 'exif_asc'):
+                file_path = os.path.join(BASE_DIR, 'storage',
+                                         file['folder'], file['filename'])
+                date_str = get_exif_date(file_path) or file['upload_date']
+            else:
+                date_str = file['upload_date']
+
+            file_date = datetime.strptime(date_str[:10], '%Y-%m-%d').date()
+        except (ValueError, TypeError, KeyError):
+            file_date = today
+
+        if file_date == today:
+            label = 'Today'
+        elif file_date == yesterday:
+            label = 'Yesterday'
+        elif file_date >= week_ago:
+            label = 'This Week'
+        else:
+            label = datetime.strptime(date_str[:10], '%Y-%m-%d').strftime('%B %Y')
+
+        if label not in groups:
+            groups[label] = []
+        groups[label].append(file)
+
+    return groups
+
+
+def get_exif_date(file_path):
+    # Tries to read the date the photo was taken from EXIF data
+    # Returns a string like "2024-12-25 14:32:10" or None if not found
+    try:
+        from PIL import Image
+        from PIL.ExifTags import TAGS
+
+        img  = Image.open(file_path)
+        exif = img._getexif()
+
+        if exif is None:
+            return None
+
+        for tag_id, value in exif.items():
+            tag = TAGS.get(tag_id, tag_id)
+            if tag == 'DateTimeOriginal':
+                return value.replace(':', '-', 2)
+
+        return None
+
+    except Exception:
+        return None
+
+
 # so templates can use format_size without passing every time
 app.jinja_env.globals['format_size'] = format_size
+app.jinja_env.globals['get_username'] = get_username_by_id
 
 
 def ensure_folders():
@@ -180,6 +245,7 @@ def home():
     query  = request.args.get('search', '')
     folder = request.args.get('folder', '')
     view   = request.args.get('view', 'mine')  # mine / all / shared
+    sort   = request.args.get('sort', 'date_desc')
 
     user_id = session['user_id']
     role    = session['role']
@@ -187,27 +253,39 @@ def home():
     # admin can view more options
     if role == 'admin' and view == 'all':
         if query:
-            files = search_files(query)
+            files = search_files(query, sort=sort)
         elif folder:
-            files = get_files_by_folder(folder)
+            files = get_files_by_folder(folder, sort=sort)
         else:
-            files = get_all_files()
+            files = get_all_files(sort=sort)
 
     elif view == 'shared':
         if query:
-            files = [f for f in get_shared_files() if query.lower() in f['original_name'].lower()]
+            files = [f for f in get_shared_files(sort=sort) if query.lower() in f['original_name'].lower()]
         elif folder:
-            files = [f for f in get_shared_files() if f['folder'] == folder]
+            files = [f for f in get_shared_files(sort=sort) if f['folder'] == folder]
         else:
-            files = get_shared_files()
+            files = get_shared_files(sort=sort)
 
     else:  # default view
         if query:
-            files = search_files(query, owner_id=user_id)
+            files = search_files(query, owner_id=user_id, sort=sort)
         elif folder:
-            files = get_files_by_folder(folder, owner_id=user_id)
+            files = get_files_by_folder(folder, owner_id=user_id, sort=sort)
         else:
-            files = get_files_by_owner(user_id)
+            files = get_files_by_owner(user_id, sort=sort)
+
+    # Handle EXIF date sorting
+    # This runs after the database query because EXIF data is on disk
+    if sort in ('exif_desc', 'exif_asc'):
+        def exif_sort_key(file):
+            file_path = os.path.join(BASE_DIR, 'storage',
+                                     file['folder'], file['filename'])
+            exif_date = get_exif_date(file_path)
+            return exif_date if exif_date else file['upload_date']
+
+        reverse = (sort == 'exif_desc')
+        files   = sorted(files, key=exif_sort_key, reverse=reverse)
 
     # stats for right panel
     # mine means only current user stats, else admin can see all
@@ -216,12 +294,20 @@ def home():
     else:
         stats = get_storage_stats()
 
+    grouped_files = group_files_by_date(files, sort=sort)
+    my_count = len(get_files_by_owner(user_id))
+    trash_count = len(get_trashed_files(owner_id=user_id if role != 'admin' else None))
+
     return render_template('index.html',
                            files=files,
+                           grouped_files=grouped_files,
                            query=query,
                            folder=folder,
                            view=view,
-                           stats=stats)
+                           sort=sort,
+                           stats=stats,
+                           my_count=my_count,
+                           trash_count=trash_count)
 
 
 @app.route('/upload', methods=['POST'])
@@ -258,6 +344,9 @@ def upload():
         )
 
         generate_thumbnail(file_id, save_path, folder)
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return 'ok', 200
 
     return redirect(url_for('home'))
 
@@ -377,6 +466,25 @@ def share(file_id):
 @app.route('/trash')
 @login_required
 def trash():
+    user_id     = session['user_id']
+    role        = session['role']
+    my_count    = len(get_files_by_owner(user_id))
+    trash_count = len(get_trashed_files(owner_id=user_id if role != 'admin' else None))
+
+    if role == 'admin':
+        files = get_trashed_files()
+    else:
+        files = get_trashed_files(owner_id=user_id)
+
+    return render_template('trash.html',
+                           files=files,
+                           my_count=my_count,
+                           trash_count=trash_count)
+
+
+@app.route('/empty_trash', methods=['POST'])
+@login_required
+def empty_trash():
     user_id = session['user_id']
     role    = session['role']
 
@@ -385,7 +493,20 @@ def trash():
     else:
         files = get_trashed_files(owner_id=user_id)
 
-    return render_template('trash.html', files=files)
+    for file in files:
+        file_path = os.path.join(BASE_DIR, 'storage',
+                                 file['folder'], file['filename'])
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+        thumb_path = os.path.join(BASE_DIR, 'static', 'thumbnails',
+                                  str(file['id']) + '.jpg')
+        if os.path.exists(thumb_path):
+            os.remove(thumb_path)
+
+        delete_file(file['id'])
+
+    return redirect(url_for('trash'))
 
 
 @app.route('/restore/<int:file_id>', methods=['POST'])
@@ -432,13 +553,89 @@ def permanent_delete(file_id):
     return redirect(url_for('trash'))
 
 
+@app.route('/rename/<int:file_id>', methods=['POST'])
+@login_required
+def rename(file_id):
+    file    = get_file_by_id(file_id)
+    user_id = session['user_id']
+    role    = session['role']
+
+    if file is None:
+        return 'File not found', 404
+
+    if file['is_deleted']:
+        return 'File not found', 404
+
+    if role != 'admin' and file['owner_id'] != user_id:
+        return 'Access denied', 403
+
+    new_name = request.form.get('name', '').strip()
+
+    if not new_name:
+        return 'Name cannot be empty', 400
+
+    rename_file(file_id, new_name)
+    return 'ok', 200
+
+
 # admin routes
 
 @app.route('/admin/users')
 @admin_required
 def admin_users():
-    users = get_all_users()
-    return render_template('admin_users.html', users=users)
+    stats = get_admin_stats()
+    return render_template('admin_users.html', stats=stats)
+
+
+@app.route('/settings')
+@login_required
+def settings():
+    user_id = session['user_id']
+    user    = get_user_by_id(user_id)
+    stats   = get_storage_stats(owner_id=user_id)
+    return render_template('settings.html', user=user, stats=stats)
+
+
+@app.route('/settings/change_password', methods=['POST'])
+@login_required
+def change_password():
+    from werkzeug.security import check_password_hash, generate_password_hash
+    user_id     = session['user_id']
+    current     = request.form.get('current_password', '')
+    new_pass    = request.form.get('new_password', '')
+    confirm     = request.form.get('confirm_password', '')
+
+    user = get_user_by_id(user_id)
+
+    if not check_password_hash(user['password'], current):
+        return render_template('settings.html', user=user,
+                               stats=get_storage_stats(owner_id=user_id),
+                               error='Current password is incorrect',
+                               tab='account')
+
+    if new_pass != confirm:
+        return render_template('settings.html', user=user,
+                               stats=get_storage_stats(owner_id=user_id),
+                               error='New passwords do not match',
+                               tab='account')
+
+    if len(new_pass) < 4:
+        return render_template('settings.html', user=user,
+                               stats=get_storage_stats(owner_id=user_id),
+                               error='Password must be at least 4 characters',
+                               tab='account')
+
+    conn   = get_db()
+    cursor = conn.cursor()
+    cursor.execute('UPDATE users SET password = ? WHERE id = ?',
+                   (generate_password_hash(new_pass), user_id))
+    conn.commit()
+    conn.close()
+
+    return render_template('settings.html', user=user,
+                           stats=get_storage_stats(owner_id=user_id),
+                           success='Password changed successfully',
+                           tab='account')
 
 
 @app.route('/admin/user/<int:user_id>')

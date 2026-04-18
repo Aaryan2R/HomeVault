@@ -15,6 +15,13 @@
     </div>
 
     {% if files %}
+    <form action="/empty_trash" method="POST" style="margin-bottom:16px;">
+        <button type="submit" class="btn btn-danger"
+                onclick="return confirmAction('Permanently delete ALL trashed files? This cannot be undone.')">
+            &#128465;&#65039; Empty Trash ({{ files|length }} files)
+        </button>
+    </form>
+
     <div class="file-list">
         <div class="file-list-header">
             <span></span>
@@ -32,6 +39,7 @@
                 {% if file['file_type'] == 'Photos' %}
                     <img src="/static/thumbnails/{{ file['id'] }}.jpg"
                          alt="{{ file['original_name'] }}"
+                         draggable="false"
                          style="opacity: 0.5;"
                          onerror="this.style.display='none'; this.parentElement.textContent='📷';">
                 {% elif file['file_type'] == 'Videos' %}

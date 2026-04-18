@@ -60,6 +60,13 @@
                     <a href="/?view=mine" class="nav-link {% if request.path == '/' and request.args.get('view', 'mine') == 'mine' %}active{% endif %}">
                         <span class="nav-icon">📁</span>
                         My Cloud
+                        {% if my_count is defined and my_count > 0 %}
+                        <span style="margin-left:auto; background:var(--accent);
+                                     color:white; font-size:11px; font-weight:700;
+                                     padding:1px 7px; border-radius:20px;">
+                            {{ my_count }}
+                        </span>
+                        {% endif %}
                     </a>
 
                     <a href="/?view=shared" class="nav-link {% if request.path == '/' and request.args.get('view') == 'shared' %}active{% endif %}">
@@ -74,9 +81,21 @@
                     </a>
                     {% endif %}
 
+                    <a href="/settings" class="nav-link {% if request.path == '/settings' %}active{% endif %}">
+                        <span class="nav-icon">&#9881;&#65039;</span>
+                        Settings
+                    </a>
+
                     <a href="/trash" class="nav-link {% if request.path == '/trash' %}active{% endif %}">
                         <span class="nav-icon">🗑️</span>
                         Trash
+                        {% if trash_count is defined and trash_count > 0 %}
+                        <span style="margin-left:auto; background:var(--danger);
+                                     color:white; font-size:11px; font-weight:700;
+                                     padding:1px 7px; border-radius:20px;">
+                            {{ trash_count }}
+                        </span>
+                        {% endif %}
                     </a>
 
                     {% if session['role'] == 'admin' %}

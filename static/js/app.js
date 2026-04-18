@@ -39,6 +39,7 @@ function toggleTheme() {
 
 // keep only one open
 var activeDropdown = null;
+var previewClickTimer = null;
 
 function toggleMenu(button) {
     // click same one again = close
@@ -136,17 +137,21 @@ function closeSidebar() {
 function initUploadZone() {
     var zone      = document.querySelector('.upload-zone');
     var fileInput = document.getElementById('file-input');
+    var uploadBtn = document.getElementById('uploadBtn');
 
     if (!zone || !fileInput) return;
 
     zone.addEventListener('click', function(e) {
-        if (e.target.closest('.upload-btn') || e.target.closest('.upload-options')) return;
+        if (e.target.closest('.upload-btn') ||
+            e.target.closest('.upload-options')) return;
         fileInput.click();
     });
 
     zone.addEventListener('dragover', function(e) {
         e.preventDefault();
-        zone.classList.add('drag-over');
+        if (e.dataTransfer.types.includes('Files')) {
+            zone.classList.add('drag-over');
+        }
     });
 
     zone.addEventListener('dragleave', function() {
@@ -156,15 +161,112 @@ function initUploadZone() {
     zone.addEventListener('drop', function(e) {
         e.preventDefault();
         zone.classList.remove('drag-over');
-        if (e.dataTransfer.files.length > 0) {
-            fileInput.files = e.dataTransfer.files;
-            updateFileName(fileInput);
-        }
+        if (!e.dataTransfer.types.includes('Files')) return;
+        if (e.dataTransfer.files.length === 0) return;
+        fileInput.files = e.dataTransfer.files;
+        updateFileName(fileInput);
     });
 
     fileInput.addEventListener('change', function() {
         updateFileName(fileInput);
     });
+
+    if (uploadBtn) {
+        uploadBtn.addEventListener('click', function() {
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert('Please choose at least one file first.');
+                return;
+            }
+            startUpload(fileInput.files);
+        });
+    }
+}
+
+function startUpload(files) {
+    var progressPanel = document.getElementById('progressPanel');
+    var progressList  = document.getElementById('progressList');
+    var shareCheck    = document.getElementById('shareCheck');
+    var uploadBtn     = document.getElementById('uploadBtn');
+
+    progressPanel.style.display = 'block';
+    progressList.innerHTML      = '';
+
+    uploadBtn.disabled    = true;
+    uploadBtn.textContent = 'Uploading...';
+
+    var completed = 0;
+    var total     = files.length;
+
+    for (var i = 0; i < files.length; i++) {
+        uploadOneFile(files[i], shareCheck.checked, progressList,
+            function() {
+                completed++;
+                if (completed === total) {
+                    uploadBtn.disabled    = false;
+                    uploadBtn.textContent = 'Upload Files';
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 1500);
+                }
+            });
+    }
+}
+
+function uploadOneFile(file, isShared, progressList, onDone) {
+    var item = document.createElement('div');
+    item.className = 'progress-item';
+    item.innerHTML =
+        '<div class="progress-item-name">' + file.name + '</div>' +
+        '<div class="progress-bar-bg">' +
+            '<div class="progress-bar-fill" id="bar-' + file.name.replace(/\W/g, '') + '"></div>' +
+        '</div>' +
+        '<div class="progress-status">' +
+            '<span class="progress-pct">0%</span>' +
+            '<span class="progress-state">Starting...</span>' +
+        '</div>';
+    progressList.appendChild(item);
+
+    var bar   = item.querySelector('.progress-bar-fill');
+    var pct   = item.querySelector('.progress-pct');
+    var state = item.querySelector('.progress-state');
+
+    var formData = new FormData();
+    formData.append('file', file);
+    formData.append('is_shared', isShared ? 'on' : '');
+
+    var xhr = new XMLHttpRequest();
+
+    xhr.upload.addEventListener('progress', function(e) {
+        if (e.lengthComputable) {
+            var percent = Math.round((e.loaded / e.total) * 100);
+            bar.style.width   = percent + '%';
+            pct.textContent   = percent + '%';
+            state.textContent = 'Uploading...';
+        }
+    });
+
+    xhr.addEventListener('load', function() {
+        if (xhr.status === 200 || xhr.status === 302) {
+            bar.style.width   = '100%';
+            bar.classList.add('done');
+            pct.textContent   = '100%';
+            state.textContent = 'Done ✓';
+        } else {
+            bar.classList.add('error');
+            state.textContent = 'Failed ✗';
+        }
+        onDone();
+    });
+
+    xhr.addEventListener('error', function() {
+        bar.classList.add('error');
+        state.textContent = 'Error ✗';
+        onDone();
+    });
+
+    xhr.open('POST', '/upload');
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    xhr.send(formData);
 }
 
 function updateFileName(input) {
@@ -209,25 +311,34 @@ function initViewToggle() {
 }
 
 function applyView(view, save) {
-    var fileList   = document.getElementById('fileList');
-    var listBtn    = document.getElementById('viewList');
-    var gridBtn    = document.getElementById('viewGrid');
-    var listHeader = document.getElementById('fileListHeader');
+    var fileLists   = document.querySelectorAll('.file-list');
+    var listBtn     = document.getElementById('viewList');
+    var gridBtn     = document.getElementById('viewGrid');
+    var listHeaders = document.querySelectorAll('.file-list-header');
+    var i;
 
-    if (!fileList) return;
+    if (!fileLists.length) return;
 
     if (view === 'grid') {
-        fileList.classList.add('grid-view');
-        fileList.classList.remove('list-view');
-        if (listHeader) listHeader.style.display = 'none';
-        if (gridBtn)    gridBtn.classList.add('view-btn-active');
-        if (listBtn)    listBtn.classList.remove('view-btn-active');
+        for (i = 0; i < fileLists.length; i++) {
+            fileLists[i].classList.add('grid-view');
+            fileLists[i].classList.remove('list-view');
+        }
+        for (i = 0; i < listHeaders.length; i++) {
+            listHeaders[i].style.display = 'none';
+        }
+        if (gridBtn) gridBtn.classList.add('view-btn-active');
+        if (listBtn) listBtn.classList.remove('view-btn-active');
     } else {
-        fileList.classList.add('list-view');
-        fileList.classList.remove('grid-view');
-        if (listHeader) listHeader.style.display = '';
-        if (listBtn)    listBtn.classList.add('view-btn-active');
-        if (gridBtn)    gridBtn.classList.remove('view-btn-active');
+        for (i = 0; i < fileLists.length; i++) {
+            fileLists[i].classList.add('list-view');
+            fileLists[i].classList.remove('grid-view');
+        }
+        for (i = 0; i < listHeaders.length; i++) {
+            listHeaders[i].style.display = '';
+        }
+        if (listBtn) listBtn.classList.add('view-btn-active');
+        if (gridBtn) gridBtn.classList.remove('view-btn-active');
     }
 
     if (save) {
@@ -307,6 +418,102 @@ function closePreview() {
     document.body.style.overflow = '';
 }
 
+function makeFileNameEditable(nameEl, fileId) {
+    var currentName = nameEl.textContent.trim();
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.value = currentName;
+    input.className = 'rename-input';
+    input.style.cssText =
+        'width:100%; padding:3px 6px; border:1px solid var(--accent);' +
+        'border-radius:4px; font-size:14px; font-family:inherit;' +
+        'background:var(--bg-card); color:var(--text-primary);';
+
+    nameEl.replaceWith(input);
+    input.focus();
+    input.select();
+
+    function saveRename() {
+        var newName = input.value.trim();
+        if (!newName || newName === currentName) {
+            cancelRename();
+            return;
+        }
+
+        var formData = new FormData();
+        formData.append('name', newName);
+
+        fetch('/rename/' + fileId, {
+            method: 'POST',
+            body: formData
+        }).then(function(response) {
+            if (response.ok) {
+                var newDiv = document.createElement('div');
+                newDiv.className = 'file-name';
+                newDiv.title = newName;
+                newDiv.textContent = newName;
+                newDiv.addEventListener('dblclick', function(e) {
+                    if (previewClickTimer) {
+                        clearTimeout(previewClickTimer);
+                        previewClickTimer = null;
+                    }
+                    closePreview();
+                    e.stopPropagation();
+                    makeFileNameEditable(newDiv, fileId);
+                });
+                input.replaceWith(newDiv);
+            } else {
+                cancelRename();
+            }
+        });
+    }
+
+    function cancelRename() {
+        var div = document.createElement('div');
+        div.className = 'file-name';
+        div.title = currentName;
+        div.textContent = currentName;
+        div.addEventListener('dblclick', function(e) {
+            if (previewClickTimer) {
+                clearTimeout(previewClickTimer);
+                previewClickTimer = null;
+            }
+            closePreview();
+            e.stopPropagation();
+            makeFileNameEditable(div, fileId);
+        });
+        input.replaceWith(div);
+    }
+
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') saveRename();
+        if (e.key === 'Escape') cancelRename();
+    });
+
+    input.addEventListener('blur', saveRename);
+}
+
+function initRename() {
+    document.querySelectorAll('.preview-trigger').forEach(function(row) {
+        var nameEl = row.querySelector('.file-name');
+        var fileId = row.getAttribute('data-id');
+
+        if (!nameEl || !fileId) return;
+
+        nameEl.addEventListener('dblclick', function(e) {
+            if (previewClickTimer) {
+                clearTimeout(previewClickTimer);
+                previewClickTimer = null;
+            }
+            closePreview();
+            e.stopPropagation();
+            makeFileNameEditable(nameEl, fileId);
+        });
+
+        nameEl.title = 'Double-click to rename';
+    });
+}
+
 
 // init on page load
 
@@ -315,6 +522,38 @@ initTheme();
 document.addEventListener('DOMContentLoaded', function() {
     initUploadZone();
     initViewToggle();
+    initRename();
+
+    document.querySelectorAll('.preview-trigger').forEach(function(row) {
+        row.addEventListener('click', function(e) {
+            if (e.target.closest('a')) return;
+            if (e.target.closest('button')) return;
+            if (e.target.closest('form')) return;
+            if (e.target.closest('.rename-input')) return;
+
+            var fileId   = row.getAttribute('data-id');
+            var fileType = row.getAttribute('data-type');
+            var fileName = row.getAttribute('data-name');
+
+            if (previewClickTimer) {
+                clearTimeout(previewClickTimer);
+            }
+
+            previewClickTimer = setTimeout(function() {
+                openPreview(fileId, fileType, fileName);
+                previewClickTimer = null;
+            }, 400);
+        });
+
+        row.addEventListener('dblclick', function(e) {
+            if (e.target.closest('.file-name') && previewClickTimer) {
+                clearTimeout(previewClickTimer);
+                previewClickTimer = null;
+            }
+        });
+
+        row.style.cursor = 'pointer';
+    });
 
     var modal = document.getElementById('previewModal');
     if (modal) {
