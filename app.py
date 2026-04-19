@@ -9,12 +9,20 @@ from database import (init_db, upgrade_db, save_file, get_all_files, get_file_by
 from thumbnailer import generate_thumbnail
 from datetime import datetime, timedelta
 from functools import wraps
+from dotenv import load_dotenv
 import os
 import uuid
 import mimetypes
 
+# Load environment variables from .env file
+# This must happen before we use any env variables
+load_dotenv()
+
 app = Flask(__name__)
-app.secret_key = 'homevault-secret-key-change-this-later'
+# Read secret key from environment variable
+# If not found fall back to a random key
+# (random key means sessions reset on restart — fine for dev)
+app.secret_key = os.environ.get('SECRET_KEY') or os.urandom(24)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, 'storage')
@@ -654,4 +662,7 @@ if __name__ == '__main__':
     ensure_folders()
     init_db()
     upgrade_db()
-    app.run(debug=True, threaded=True)
+    # Read debug mode from environment variable
+    # Default to False for safety
+    debug_mode = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
+    app.run(host='0.0.0.0', debug=debug_mode, threaded=True)

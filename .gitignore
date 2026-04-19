@@ -5,6 +5,9 @@ __pycache__/
 
 # Database (has real user data, never push)
 homevault.db
+*.db
+*.sqlite
+*.sqlite3
 
 # Log files
 *.log
@@ -15,10 +18,7 @@ server.err.log
 .playwright-cli/
 
 # Storage folders (user uploaded files, don't push)
-storage/Photos/
-storage/Videos/
-storage/Documents/
-storage/Others/
+storage/
 static/thumbnails/
 
 # Windows
@@ -27,3 +27,5 @@ desktop.ini
 CHEAT_SHEET.txt
 PROJECT_CONTEXT.txt
 VIVA_NOTES.txt
+.env
+*.env

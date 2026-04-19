@@ -448,6 +448,9 @@ function makeFileNameEditable(nameEl, fileId) {
             body: formData
         }).then(function(response) {
             if (response.ok) {
+                var row = input.closest('.preview-trigger');
+                if (row) row.setAttribute('data-name', newName);
+
                 var newDiv = document.createElement('div');
                 newDiv.className = 'file-name';
                 newDiv.title = newName;
