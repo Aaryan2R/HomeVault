@@ -1,6 +1,6 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
-{% block title_suffix %} — Admin Panel{% endblock %}
+{% block title_suffix %} - Admin Panel{% endblock %}
 
 {% block content %}
 
@@ -12,7 +12,7 @@
     <a href="/register" class="btn btn-primary">+ Add User</a>
 </div>
 
-<!-- Stats Cards -->
+<!-- top stats -->
 <div class="admin-stats">
 
     <div style="background:var(--bg-card); border:1px solid var(--border-color);
@@ -49,7 +49,7 @@
 
 </div>
 
-<!-- Users Table -->
+<!-- users table -->
 {% if stats['users'] %}
 <table class="admin-table">
     <tr>
@@ -92,3 +92,4 @@
 {% endif %}
 
 {% endblock %}
+

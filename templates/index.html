@@ -1,10 +1,10 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
-{% block title_suffix %} — Dashboard{% endblock %}
+{% block title_suffix %} - Dashboard{% endblock %}
 
 {% block content %}
 
-    {# search bar #}
+    {# search form #}
     <div class="search-bar">
         <form action="/" method="GET">
             <input type="hidden" name="view" value="{{ view }}" />
@@ -24,7 +24,7 @@
         </form>
     </div>
 
-    {# top tabs #}
+    {# top view tabs #}
     <div class="view-tabs">
         <a href="/?view=mine&sort={{ sort }}" class="view-tab {% if view == 'mine' %}active{% endif %}">
             My Files
@@ -97,7 +97,7 @@
                 </select>
             </form>
 
-            {# list/grid buttons #}
+            {# list and grid toggle #}
             <div class="view-toggle">
             <button class="view-btn" id="viewList" title="List view">&#9776;</button>
             <button class="view-btn" id="viewGrid" title="Grid view">&#9638;</button>
@@ -106,7 +106,7 @@
 
     </div>
 
-    {# heading area #}
+    {# page heading #}
     <div class="page-header">
         {% if query %}
             <h2>Search results for "{{ query }}" ({{ files|length }})</h2>
@@ -121,7 +121,7 @@
         {% endif %}
     </div>
 
-    {# file list #}
+    {# file list grouped by date #}
     {% if files %}
         {% for group_label, group_files in grouped_files.items() %}
         <div style="font-size:13px; font-weight:600; color:var(--text-muted);
@@ -149,7 +149,7 @@
                  data-type="{{ file['file_type'] }}"
                  data-name="{{ file['original_name'] }}">
 
-                {# icon or thumb #}
+                {# icon or thumbnail #}
                 <div class="file-icon {{ file['file_type']|lower }}">
                     {% if file['file_type'] == 'Photos' %}
                         <img src="/static/thumbnails/{{ file['id'] }}.jpg"
@@ -324,3 +324,4 @@
 
     </aside>
 {% endblock %}
+

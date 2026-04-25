@@ -15,7 +15,7 @@
 /* ─── 1. Theme Variables ──────────────────────────────────── */
 
 :root {
-    /* Light mode colors (default) */
+    /* Light theme colors */
     --bg-primary:    #f0f4f8;
     --bg-card:       #ffffff;
     --bg-hover:      #f8fafc;
@@ -37,7 +37,7 @@
     --shadow:        0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
     --shadow-lg:     0 4px 12px rgba(0, 0, 0, 0.1);
 
-    /* Category colors */
+    /* Colors used for file categories */
     --cat-photos:    #2563eb;
     --cat-documents: #ec4899;
     --cat-videos:    #f97316;
@@ -103,11 +103,8 @@ a {
 
 
 /* ─── 3. App Layout ───────────────────────────────────────── */
-/*
-   The main layout is a flexbox row with 3 columns:
-   [Sidebar] [Main Content] [Right Panel]
-   On mobile, sidebar becomes an overlay and right panel stacks below.
-*/
+/* Desktop uses sidebar + content + right panel.
+   On mobile the layout stacks and the sidebar becomes an overlay. */
 
 .app-layout {
     display: flex;
@@ -199,7 +196,7 @@ a {
     text-transform: capitalize;
 }
 
-/* Navigation links in sidebar */
+/* Sidebar links */
 .sidebar-nav {
     flex: 1;
     padding: 16px 12px;
@@ -247,7 +244,7 @@ a {
     flex-shrink: 0;
 }
 
-/* Sidebar footer with dark mode toggle and logout */
+/* Sidebar footer */
 .sidebar-footer {
     padding: 16px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -330,7 +327,7 @@ a {
     transition: margin-left 0.3s ease;
 }
 
-/* Search bar at the top */
+/* Search bar */
 .search-bar {
     position: relative;
     margin-bottom: 28px;
@@ -446,7 +443,7 @@ a {
     box-shadow: var(--shadow-lg);
 }
 
-/* Each category gets its own gradient color */
+/* Category card colors */
 .category-card.photos    { background: linear-gradient(135deg, #2563eb, #3b82f6); }
 .category-card.documents { background: linear-gradient(135deg, #db2777, #ec4899); }
 .category-card.videos    { background: linear-gradient(135deg, #ea580c, #f97316); }
@@ -469,7 +466,7 @@ a {
     opacity: 0.85;
 }
 
-/* Decorative circle in background of card */
+/* Small background shape for the card */
 .category-card::after {
     content: '';
     position: absolute;
@@ -566,7 +563,7 @@ a {
     color: var(--text-secondary);
 }
 
-/* Share status indicator */
+/* Shared/private badge */
 .share-badge {
     font-size: 13px;
     padding: 3px 10px;
@@ -596,7 +593,7 @@ a {
 
 
 /* ─── 10. Three-Dot Menu ──────────────────────────────────── */
-/* The 3-dot button on each file row that opens a dropdown with actions */
+/* Dropdown opened from the file action button */
 
 .menu-container {
     position: relative;
@@ -701,7 +698,7 @@ a {
     transition: background-color 0.3s ease;
 }
 
-/* Upload drop zone */
+/* Upload box */
 .upload-zone {
     background: var(--bg-card);
     border: 2px dashed var(--border-color);
@@ -781,7 +778,7 @@ a {
     background: var(--accent-hover);
 }
 
-/* Storage stats card */
+/* Storage card */
 .storage-card {
     background: var(--bg-card);
     border-radius: 14px;
@@ -1080,7 +1077,7 @@ a {
     font-weight: 600;
 }
 
-/* Dark mode toggle on auth pages */
+/* Theme button on auth pages */
 .auth-theme-toggle {
     position: fixed;
     top: 20px;
@@ -1204,7 +1201,7 @@ a {
     padding: 4px;
 }
 
-/* Overlay that appears behind sidebar on mobile */
+/* Overlay behind the sidebar on mobile */
 .sidebar-overlay {
     display: none;
     position: fixed;
@@ -1281,7 +1278,7 @@ a {
 
 /* ─── 19. Responsive Design ───────────────────────────────── */
 
-/* Adjust main content to account for right panel */
+/* Leave room for the right panel on desktop */
 @media (min-width: 1025px) {
     .main-content {
         margin-right: var(--right-panel-width);
@@ -1375,7 +1372,7 @@ a {
     }
 }
 
-/* Small phones */
+/* Extra small screens */
 @media (max-width: 480px) {
     .categories-grid {
         grid-template-columns: 1fr 1fr;
@@ -1399,7 +1396,7 @@ a {
 
 /* ─── 20. Utility & Animation ─────────────────────────────── */
 
-/* Smooth transitions for all theme-switching */
+/* Smooth color changes when theme changes */
 .sidebar, .main-content, .right-panel, .file-list,
 .storage-card, .upload-zone, .view-tabs, .auth-box,
 .admin-table, .mobile-header, .category-card, .empty-state,
@@ -1408,7 +1405,7 @@ a {
     transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
-/* Scrollbar styling */
+/* Scrollbar */
 ::-webkit-scrollbar {
     width: 6px;
 }
@@ -1426,14 +1423,14 @@ a {
     background: var(--text-muted);
 }
 
-/* Hidden helper for forms that POST via button */
+/* Helper class for inline POST forms */
 .hidden-form {
     display: inline;
 }
 
 /* ─── Grid View ──────────────────────────────────────────── */
 
-/* View toggle buttons */
+/* Buttons for list/grid view */
 .view-toggle {
     display: flex;
     gap: 4px;
@@ -1477,7 +1474,7 @@ a {
     padding: 4px 0;
 }
 
-/* Grid card */
+/* File card in grid view */
 .file-list.grid-view .file-row {
     display: flex;
     flex-direction: column;
@@ -1500,7 +1497,7 @@ a {
     background: var(--bg-hover);
 }
 
-/* Grid thumbnail */
+/* Thumbnail in grid view */
 .file-list.grid-view .file-icon {
     width: 80px;
     height: 80px;
@@ -1519,7 +1516,7 @@ a {
     border-radius: 10px;
 }
 
-/* Grid file name */
+/* File name in grid view */
 .file-list.grid-view .file-name {
     font-size: 12px;
     font-weight: 500;
@@ -1532,14 +1529,14 @@ a {
     margin-bottom: 4px;
 }
 
-/* Hide columns that don't make sense in grid view */
+/* Hide row-only parts in grid view */
 .file-list.grid-view .file-meta,
 .file-list.grid-view .share-badge,
 .file-list.grid-view .file-list-header {
     display: none;
 }
 
-/* Show share badge as a small dot in grid view */
+/* Small status text in grid view */
 .file-list.grid-view .grid-status {
     font-size: 11px;
     color: var(--text-muted);
@@ -1558,14 +1555,14 @@ a {
     opacity: 1;
 }
 
-/* Size text in grid */
+/* File size in grid view */
 .file-list.grid-view .grid-size {
     font-size: 11px;
     color: var(--text-muted);
     margin-top: 2px;
 }
 
-/* Mobile grid adjustments */
+/* Grid tweaks for mobile */
 @media (max-width: 768px) {
     .file-list.grid-view {
         grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
@@ -1583,7 +1580,7 @@ a {
     }
 }
 
-/* Upload progress */
+/* Upload progress list */
 
 .progress-item {
     background: var(--bg-card);
@@ -1635,7 +1632,7 @@ a {
     justify-content: space-between;
 }
 
-/* Prevent internal drags causing accidental uploads */
+/* Stop internal drags from triggering the upload box */
 .file-icon img,
 .file-thumb,
 .category-card {

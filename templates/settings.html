@@ -1,6 +1,6 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
-{% block title_suffix %} — Settings{% endblock %}
+{% block title_suffix %} - Settings{% endblock %}
 
 {% block content %}
 
@@ -9,7 +9,7 @@
     <p>Manage your account and preferences</p>
 </div>
 
-<!-- Tab buttons -->
+<!-- tab buttons -->
 <div style="display:flex; gap:4px; background:var(--bg-card);
             padding:4px; border-radius:10px; width:fit-content;
             margin-bottom:24px; border:1px solid var(--border-color);">
@@ -27,7 +27,7 @@
     </button>
 </div>
 
-<!-- Account Tab -->
+<!-- account tab -->
 <div id="panel-account">
 
     {% if error and tab == 'account' %}
@@ -103,7 +103,7 @@
     </div>
 </div>
 
-<!-- Appearance Tab -->
+<!-- appearance tab -->
 <div id="panel-appearance" style="display:none;">
     <div style="background:var(--bg-card); border:1px solid var(--border-color);
                 border-radius:12px; padding:24px; max-width:480px;">
@@ -133,7 +133,7 @@
     </div>
 </div>
 
-<!-- Storage Tab -->
+<!-- storage tab -->
 <div id="panel-storage" style="display:none;">
     <div style="background:var(--bg-card); border:1px solid var(--border-color);
                 border-radius:12px; padding:24px; max-width:480px;">
@@ -176,7 +176,7 @@
     </div>
 </div>
 
-<!-- Tab switching JavaScript -->
+<!-- small tab switch script -->
 <script>
 function showTab(name) {
     var panels = ['account', 'appearance', 'storage'];
@@ -193,10 +193,11 @@ function showTab(name) {
     }
 }
 
-// Open correct tab if server sent one back after form submit
+// Open the right tab again after the form comes back
 {% if tab %}
 showTab('{{ tab }}');
 {% endif %}
 </script>
 
 {% endblock %}
+

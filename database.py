@@ -13,7 +13,7 @@ def get_db():
 
 
 def get_order_clause(sort):
-    # map sort key from URL to safe SQL order text
+    # Match the sort value from the URL to a safe SQL ORDER BY
     orders = {
         'date_desc': 'upload_date DESC',
         'date_asc':  'upload_date ASC',
@@ -29,7 +29,7 @@ def init_db():
     conn = get_db()
     cursor = conn.cursor()
 
-    # table for files
+    # Files table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS files (
             id           INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -46,7 +46,7 @@ def init_db():
         )
     ''')
 
-    # table for users
+    # Users table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -66,7 +66,7 @@ def upgrade_db():
     conn = get_db()
     cursor = conn.cursor()
 
-    # for older db versions try adding missing columns
+    # Try to add columns that older databases may not have yet
     new_columns = [
         'ALTER TABLE files ADD COLUMN is_deleted INTEGER DEFAULT 0',
         'ALTER TABLE files ADD COLUMN deleted_at TEXT DEFAULT NULL',
@@ -78,23 +78,23 @@ def upgrade_db():
         try:
             cursor.execute(sql)
         except:
-            pass  # maybe column already there
+            pass  # column probably already exists
 
     conn.commit()
     conn.close()
 
 
-# user functions
+# user helpers
 
 def create_user(username, password, role='member'):
     conn = get_db()
     cursor = conn.cursor()
 
-    # check duplicate username first
+    # Check username first so we do not create duplicates
     cursor.execute('SELECT id FROM users WHERE username = ?', (username,))
     if cursor.fetchone():
         conn.close()
-        return None  # already used
+        return None  # username already taken
 
     hashed   = generate_password_hash(password)
     created  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -151,10 +151,10 @@ def get_all_users():
 def check_login(username, password):
     user = get_user_by_username(username)
     if user is None:
-        return None  # no such user
+        return None  # user not found
     if check_password_hash(user['password'], password):
-        return user  # login ok
-    return None      # wrong password
+        return user  # password matched
+    return None      # password did not match
 
 
 def count_users():
@@ -166,7 +166,7 @@ def count_users():
     return count
 
 
-# file functions
+# file helpers
 
 def save_file(filename, original_name, file_type, file_size, folder, upload_date, owner_id, is_shared=0):
     conn = get_db()
@@ -358,7 +358,7 @@ def toggle_shared(file_id):
         conn.close()
         return
 
-    # simple toggle
+    # Flip shared on/off
     new_value = 1 if file['is_shared'] == 0 else 0
     cursor.execute('UPDATE files SET is_shared = ? WHERE id = ?', (new_value, file_id))
     conn.commit()
@@ -414,30 +414,18 @@ def get_admin_stats():
     }
 
 
-# storage stats
+# storage summary helpers
 
 def get_storage_stats(owner_id=None):
     """
-    Returns storage usage info for the dashboard.
-    If owner_id is given, only counts that user's files.
-    Only counts non-deleted files (not in trash).
-
-    Returns a dictionary like:
-    {
-        'total_files': 42,
-        'total_size': 157286400,       # bytes
-        'categories': {
-            'Photos':    {'count': 20, 'size': 80000000},
-            'Videos':    {'count': 5,  'size': 50000000},
-            'Documents': {'count': 12, 'size': 25000000},
-            'Others':    {'count': 5,  'size': 2286400},
-        }
-    }
+    Build the storage summary used on the dashboard and settings page.
+    If owner_id is given, only that user's active files are counted.
+    Trashed files are not included here.
     """
     conn = get_db()
     cursor = conn.cursor()
 
-    # where part changes if owner filter is there
+    # The WHERE part changes when we want stats for one user only
     if owner_id:
         where = 'WHERE is_deleted = 0 AND owner_id = ?'
         params = (owner_id,)
@@ -445,7 +433,7 @@ def get_storage_stats(owner_id=None):
         where = 'WHERE is_deleted = 0'
         params = ()
 
-    # get count and size for each folder
+    # Get count and total size for each folder
     cursor.execute(f'''
         SELECT folder, COUNT(*) as count, COALESCE(SUM(file_size), 0) as size
         FROM files
@@ -456,7 +444,7 @@ def get_storage_stats(owner_id=None):
     rows = cursor.fetchall()
     conn.close()
 
-    # make final dict
+    # Build the final result dict
     categories = {}
     total_files = 0
     total_size = 0
@@ -469,7 +457,7 @@ def get_storage_stats(owner_id=None):
         total_files += row['count']
         total_size += row['size']
 
-    # keep all 4 categories even if count is zero
+    # Keep all 4 categories even when one is empty
     for cat in ['Photos', 'Videos', 'Documents', 'Others']:
         if cat not in categories:
             categories[cat] = {'count': 0, 'size': 0}

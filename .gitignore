@@ -29,3 +29,9 @@ PROJECT_CONTEXT.txt
 VIVA_NOTES.txt
 .env
 *.env
+
+.env
+*.env
+dist/
+build/
+*.spec

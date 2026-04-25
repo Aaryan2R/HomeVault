@@ -1,19 +1,16 @@
-{#
-    one user details page for admin
-    mostly to see that user's files
-#}
+{# Admin page to see one user and their files #}
 {% extends "base.html" %}
 
-{% block title_suffix %} — {{ user['username'] }}'s Files{% endblock %}
+{% block title_suffix %} - {{ user['username'] }}'s Files{% endblock %}
 
 {% block content %}
 
     <div class="page-header">
-        <h2>📂 {{ user['username'] }}'s Files ({{ files|length }})</h2>
+        <h2>&#128194; {{ user['username'] }}'s Files ({{ files|length }})</h2>
         <p>
             Role: <span class="role-badge {{ user['role'] }}">{{ user['role']|capitalize }}</span>
-            &nbsp;·&nbsp;
-            <a href="/admin/users" style="color: var(--accent);">← Back to all users</a>
+            &nbsp;&middot;&nbsp;
+            <a href="/admin/users" style="color: var(--accent);">&larr; Back to all users</a>
         </p>
     </div>
 
@@ -34,13 +31,13 @@
                 {% if file['file_type'] == 'Photos' %}
                     <img src="/static/thumbnails/{{ file['id'] }}.jpg"
                          alt="{{ file['original_name'] }}"
-                         onerror="this.style.display='none'; this.parentElement.textContent='📷';">
+                         onerror="this.style.display='none'; this.parentElement.textContent='&#128247;';">
                 {% elif file['file_type'] == 'Videos' %}
-                    🎬
+                    &#127916;
                 {% elif file['file_type'] == 'Documents' %}
-                    📄
+                    &#128196;
                 {% else %}
-                    📦
+                    &#128230;
                 {% endif %}
             </div>
 
@@ -60,14 +57,14 @@
                 {% endif %}
             </div>
 
-            <div><!-- no actions on this view --></div>
+            <div><!-- no action buttons here --></div>
         </div>
         {% endfor %}
     </div>
 
     {% else %}
     <div class="empty-state">
-        <div class="empty-icon">📭</div>
+        <div class="empty-icon">&#128173;</div>
         <div class="empty-title">No files</div>
         <div class="empty-desc">{{ user['username'] }} hasn't uploaded any files yet.</div>
     </div>

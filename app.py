@@ -14,8 +14,7 @@ import os
 import uuid
 import mimetypes
 
-# Load environment variables from .env file
-# This must happen before we use any env variables
+# Load .env values before the app starts
 load_dotenv()
 
 app = Flask(__name__)
@@ -29,7 +28,7 @@ app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, 'storage')
 app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024
 
 
-# helper stuff
+# small helper functions
 
 def get_folder(filename):
     """
@@ -48,8 +47,8 @@ def get_folder(filename):
 
 def format_size(bytes):
     """
-    Converts bytes to human-readable sizes like '4.2 MB' or '1.5 GB'.
-    Used in templates to display file sizes nicely.
+    Turn bytes into a smaller readable format like KB, MB, or GB.
+    This is mainly used in the templates.
     """
     if bytes < 1024:
         return str(bytes) + ' B'
@@ -63,7 +62,7 @@ def format_size(bytes):
 
 def group_files_by_date(files, sort='date_desc'):
     """
-    Splits files into simple date buckets so the dashboard is easier to scan.
+    Group files into simple date sections like Today or This Week.
     """
     today     = datetime.now().date()
     yesterday = today - timedelta(days=1)
@@ -100,8 +99,8 @@ def group_files_by_date(files, sort='date_desc'):
 
 
 def get_exif_date(file_path):
-    # Tries to read the date the photo was taken from EXIF data
-    # Returns a string like "2024-12-25 14:32:10" or None if not found
+    # Try to read the taken date from photo EXIF data.
+    # If nothing is found, return None.
     try:
         from PIL import Image
         from PIL.ExifTags import TAGS
@@ -123,15 +122,15 @@ def get_exif_date(file_path):
         return None
 
 
-# so templates can use format_size without passing every time
+# Make helper functions available in Jinja templates
 app.jinja_env.globals['format_size'] = format_size
 app.jinja_env.globals['get_username'] = get_username_by_id
 
 
 def ensure_folders():
     """
-    Creates the required storage folders if they don't exist yet.
-    Runs once at startup so uploads never fail due to missing directories.
+    Create the folders HomeVault needs before the app starts.
+    This avoids upload errors when a folder is missing.
     """
     folders = [
         os.path.join(BASE_DIR, 'storage', 'Photos'),
@@ -144,8 +143,7 @@ def ensure_folders():
         os.makedirs(folder, exist_ok=True)
 
 
-# login check decorator
-# this just wraps route and sends user to login if session is not there
+# Simple login-check decorator used on protected routes
 
 def login_required(f):
     @wraps(f)
@@ -167,11 +165,11 @@ def admin_required(f):
     return decorated
 
 
-# auth routes
+# authentication routes
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    # if already logged in then send to home
+    # If the user is already logged in, send them to the dashboard
     if 'user_id' in session:
         return redirect(url_for('home'))
 
@@ -196,8 +194,8 @@ def login():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    # first user can register normally
-    # after that only admin should create more users
+    # The first account is open registration.
+    # After that, only an admin should add more users.
     first_user = count_users() == 0
 
     if not first_user and session.get('role') != 'admin':
@@ -218,7 +216,7 @@ def register():
         elif len(password) < 4:
             error = 'Password must be at least 4 characters'
         else:
-            # first account should be admin
+            # The very first account becomes admin
             if first_user:
                 role = 'admin'
 
@@ -228,7 +226,7 @@ def register():
                 error = 'Username already taken'
             else:
                 if first_user:
-                    # just login directly after first signup
+                    # Log in immediately after creating the first account
                     session['user_id']  = user_id
                     session['username'] = username
                     session['role']     = 'admin'
@@ -245,20 +243,20 @@ def logout():
     return redirect(url_for('login'))
 
 
-# main routes
+# main app routes
 
 @app.route('/')
 @login_required
 def home():
     query  = request.args.get('search', '')
     folder = request.args.get('folder', '')
-    view   = request.args.get('view', 'mine')  # mine / all / shared
+    view   = request.args.get('view', 'mine')  # mine, all, or shared
     sort   = request.args.get('sort', 'date_desc')
 
     user_id = session['user_id']
     role    = session['role']
 
-    # admin can view more options
+    # Admin gets the extra all-files view
     if role == 'admin' and view == 'all':
         if query:
             files = search_files(query, sort=sort)
@@ -275,7 +273,7 @@ def home():
         else:
             files = get_shared_files(sort=sort)
 
-    else:  # default view
+    else:  # normal default view
         if query:
             files = search_files(query, owner_id=user_id, sort=sort)
         elif folder:
@@ -283,8 +281,7 @@ def home():
         else:
             files = get_files_by_owner(user_id, sort=sort)
 
-    # Handle EXIF date sorting
-    # This runs after the database query because EXIF data is on disk
+    # EXIF date sort is done after the DB query because the date lives in the file itself
     if sort in ('exif_desc', 'exif_asc'):
         def exif_sort_key(file):
             file_path = os.path.join(BASE_DIR, 'storage',
@@ -295,8 +292,8 @@ def home():
         reverse = (sort == 'exif_desc')
         files   = sorted(files, key=exif_sort_key, reverse=reverse)
 
-    # stats for right panel
-    # mine means only current user stats, else admin can see all
+    # Right panel stats use only the current user in normal view.
+    # Admin can see global stats in the all-files view.
     if view == 'mine' or role != 'admin':
         stats = get_storage_stats(owner_id=user_id)
     else:
@@ -369,11 +366,11 @@ def download(file_id):
     if file is None:
         return 'File not found', 404
 
-    # file in trash should not open from here
+    # Files in trash should not open from here
     if file['is_deleted']:
         return 'File not found', 404
 
-    # member can only download own or shared file
+    # Members can only download their own files or shared ones
     if role != 'admin' and file['owner_id'] != user_id and not file['is_shared']:
         return 'Access denied', 403
 
@@ -397,11 +394,11 @@ def preview(file_id):
     if file is None:
         return 'File not found', 404
 
-    # if in trash then no preview
+    # No preview for trashed files
     if file['is_deleted']:
         return 'File not found', 404
 
-    # same permission rule like download
+    # Preview follows the same access rule as download
     if role != 'admin' and file['owner_id'] != user_id and not file['is_shared']:
         return 'Access denied', 403
 
@@ -410,14 +407,13 @@ def preview(file_id):
     if not os.path.exists(file_path):
         return 'File not found on disk', 404
 
-    # guess mime type from file extension
-    # browser uses this to know how to show/open it
+    # Guess the mime type from the extension so the browser knows how to open it
 
     mime_type, _ = mimetypes.guess_type(file_path)
     if mime_type is None:
         mime_type = 'application/octet-stream'
 
-    # false means show in browser, not force download
+    # Show the file in the browser instead of forcing a download
     return send_file(
         file_path,
         mimetype=mime_type,
@@ -427,8 +423,7 @@ def preview(file_id):
 
 
 
-# routes that change data
-# keeping these as POST is better
+# Routes below change app data, so they stay POST
 
 @app.route('/delete/<int:file_id>', methods=['POST'])
 @login_required
@@ -440,7 +435,7 @@ def delete(file_id):
     if file is None:
         return redirect(url_for('home'))
 
-    # member should only delete own file
+    # Members should only delete their own files
     if role != 'admin' and file['owner_id'] != user_id:
         return 'Access denied', 403
 
@@ -458,7 +453,7 @@ def share(file_id):
     if file is None:
         return redirect(url_for('home'))
 
-    # trashed file should not be shared
+    # Do not allow sharing from the trash
     if file['is_deleted']:
         return redirect(url_for('home'))
 
@@ -469,7 +464,7 @@ def share(file_id):
     return redirect(url_for('home'))
 
 
-# trash routes
+# trash-related routes
 
 @app.route('/trash')
 @login_required
@@ -662,7 +657,7 @@ if __name__ == '__main__':
     ensure_folders()
     init_db()
     upgrade_db()
-    # Read debug mode from environment variable
-    # Default to False for safety
+    # Read debug mode from .env.
+    # Keep it off by default.
     debug_mode = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
     app.run(host='0.0.0.0', debug=debug_mode, threaded=True)

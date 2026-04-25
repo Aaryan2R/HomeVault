@@ -1,16 +1,12 @@
-{#
-    trash page
-    deleted files come here
-    can restore or remove forever
-#}
+{# Trash page for files that were deleted but not removed forever yet #}
 {% extends "base.html" %}
 
-{% block title_suffix %} — Trash{% endblock %}
+{% block title_suffix %} - Trash{% endblock %}
 
 {% block content %}
 
     <div class="page-header">
-        <h2>🗑️ Trash ({{ files|length }})</h2>
+        <h2>&#128465;&#65039; Trash ({{ files|length }})</h2>
         <p>Files in trash can be restored or permanently deleted.</p>
     </div>
 
@@ -34,20 +30,20 @@
 
         {% for file in files %}
         <div class="file-row" style="opacity: 0.75;">
-            {# file icon #}
+            {# file icon or thumbnail #}
             <div class="file-icon {{ file['file_type']|lower }}">
                 {% if file['file_type'] == 'Photos' %}
                     <img src="/static/thumbnails/{{ file['id'] }}.jpg"
                          alt="{{ file['original_name'] }}"
                          draggable="false"
                          style="opacity: 0.5;"
-                         onerror="this.style.display='none'; this.parentElement.textContent='📷';">
+                         onerror="this.style.display='none'; this.parentElement.textContent='&#128247;';">
                 {% elif file['file_type'] == 'Videos' %}
-                    🎬
+                    &#127916;
                 {% elif file['file_type'] == 'Documents' %}
-                    📄
+                    &#128196;
                 {% else %}
-                    📦
+                    &#128230;
                 {% endif %}
             </div>
 
@@ -59,27 +55,27 @@
 
             <div class="file-meta">{{ format_size(file['file_size']) }}</div>
 
-            <div class="file-meta">{{ file['deleted_at'][:10] if file['deleted_at'] else '—' }}</div>
+            <div class="file-meta">{{ file['deleted_at'][:10] if file['deleted_at'] else '&mdash;' }}</div>
 
-            {# actions in trash #}
+            {# actions for trashed files #}
             <div class="menu-container">
-                <button class="menu-btn" onclick="toggleMenu(this)" title="Actions">⋯</button>
+                <button class="menu-btn" onclick="toggleMenu(this)" title="Actions">&#8943;</button>
                 <div class="menu-dropdown">
-                    {# restore form #}
+                    {# restore button #}
                     <form action="/restore/{{ file['id'] }}" method="POST" class="hidden-form">
                         <button type="submit" class="menu-item">
-                            <span class="menu-icon">♻️</span>
+                            <span class="menu-icon">&#9851;&#65039;</span>
                             Restore
                         </button>
                     </form>
 
                     <div class="menu-divider"></div>
 
-                    {# forever delete with confirm #}
+                    {# permanent delete button with confirm #}
                     <form action="/permanent_delete/{{ file['id'] }}" method="POST" class="hidden-form"
                           onsubmit="return confirmAction('This will PERMANENTLY delete the file. Are you sure?')">
                         <button type="submit" class="menu-item danger">
-                            <span class="menu-icon">💀</span>
+                            <span class="menu-icon">&#128128;</span>
                             Delete Forever
                         </button>
                     </form>
@@ -91,7 +87,7 @@
 
     {% else %}
     <div class="empty-state">
-        <div class="empty-icon">✨</div>
+        <div class="empty-icon">&#10024;</div>
         <div class="empty-title">Trash is empty</div>
         <div class="empty-desc">Deleted files will appear here.</div>
     </div>

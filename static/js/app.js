@@ -1,8 +1,8 @@
-/* main js file
-   common ui things are here */
+﻿/* Main frontend script.
+   Most small UI behavior lives here. */
 
 
-// dark mode
+// theme switch
 
 function initTheme() {
     var saved = localStorage.getItem('homevault-theme');
@@ -33,52 +33,51 @@ function toggleTheme() {
 }
 
 
-// three dot menus
-// this was clipping near edges before
-// now checking button position and opening up/down based on space
+// three-dot action menu
+// pick a better position so it does not go off-screen
 
-// keep only one open
+// only keep one dropdown open at a time
 var activeDropdown = null;
 var previewClickTimer = null;
 
 function toggleMenu(button) {
-    // click same one again = close
+    // clicking the same button again should close it
     if (activeDropdown && activeDropdown._trigger === button) {
         closeActiveDropdown();
         return;
     }
 
-    // close previous menu first
+    // close any older menu first
     closeActiveDropdown();
 
     var dropdown = button.nextElementSibling;
 
-    // get button position
+    // get the button position
     var btnRect      = button.getBoundingClientRect();
     var dropdownWidth = 180;
 
-    // fixed works better here than absolute
+    // fixed positioning works better for this menu
     dropdown.style.position = 'fixed';
     dropdown.style.width    = dropdownWidth + 'px';
     dropdown.style.zIndex   = '9999';
 
-    // horizontal position
+    // decide left position
     var leftPos = btnRect.right - dropdownWidth;
-    // little safety check
+    // keep it away from the screen edge
     if (leftPos < 8) leftPos = 8;
     dropdown.style.left = leftPos + 'px';
 
-    // decide up or down
+    // open above or below based on free space
     var spaceBelow = window.innerHeight - btnRect.bottom;
     var spaceAbove = btnRect.top;
-    var dropdownHeight = 160; // rough height
+    var dropdownHeight = 160; // approximate dropdown height
 
     if (spaceBelow >= dropdownHeight || spaceBelow >= spaceAbove) {
-        // open down
+        // open below the button
         dropdown.style.top    = (btnRect.bottom + 4) + 'px';
         dropdown.style.bottom = 'auto';
     } else {
-        // open up
+        // open above the button
         dropdown.style.top    = 'auto';
         dropdown.style.bottom = (window.innerHeight - btnRect.top + 4) + 'px';
     }
@@ -91,7 +90,7 @@ function toggleMenu(button) {
 function closeActiveDropdown() {
     if (activeDropdown) {
         activeDropdown.classList.remove('open');
-        // clear inline style after closing
+        // clear the inline styles after closing
         activeDropdown.style.position = '';
         activeDropdown.style.top      = '';
         activeDropdown.style.bottom   = '';
@@ -102,20 +101,20 @@ function closeActiveDropdown() {
     }
 }
 
-// outside click closes it
+// clicking outside closes the menu
 document.addEventListener('click', function(e) {
     if (!e.target.closest('.menu-container')) {
         closeActiveDropdown();
     }
 });
 
-// scroll also closes it because menu is fixed
+// scrolling also closes it because the menu is fixed
 document.addEventListener('scroll', function() {
     closeActiveDropdown();
 }, true);
 
 
-// mobile sidebar
+// mobile sidebar controls
 
 function openSidebar() {
     var sidebar = document.querySelector('.sidebar');
@@ -132,7 +131,7 @@ function closeSidebar() {
 }
 
 
-// upload zone
+// upload box
 
 function initUploadZone() {
     var zone      = document.querySelector('.upload-zone');
@@ -250,17 +249,17 @@ function uploadOneFile(file, isShared, progressList, onDone) {
             bar.style.width   = '100%';
             bar.classList.add('done');
             pct.textContent   = '100%';
-            state.textContent = 'Done ✓';
+            state.textContent = 'Done';
         } else {
             bar.classList.add('error');
-            state.textContent = 'Failed ✗';
+            state.textContent = 'Failed';
         }
         onDone();
     });
 
     xhr.addEventListener('error', function() {
         bar.classList.add('error');
-        state.textContent = 'Error ✗';
+        state.textContent = 'Error';
         onDone();
     });
 
@@ -280,15 +279,15 @@ function updateFileName(input) {
 }
 
 
-// confirm helper
+// small confirm helper
 
 function confirmAction(message) {
     return confirm(message);
 }
 
 
-// grid/list toggle
-// saved in local storage so view stays same next time
+// list and grid toggle
+// save the choice so it stays the same next time
 
 function initViewToggle() {
     var saved = localStorage.getItem('homevault-view') || 'list';
@@ -347,7 +346,7 @@ function applyView(view, save) {
 }
 
 
-// preview modal
+// preview modal helpers
 
 function handlePreview(button) {
     var fileId   = button.getAttribute('data-id');
@@ -518,7 +517,7 @@ function initRename() {
 }
 
 
-// init on page load
+// run setup after the page loads
 
 initTheme();
 
@@ -569,3 +568,4 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.key === 'Escape') closePreview();
     });
 });
+

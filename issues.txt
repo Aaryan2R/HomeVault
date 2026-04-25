@@ -1,0 +1,50 @@
+HomeVault Final Review Issues
+
+Main result:
+- Core Flask file-management flows tested well in the isolated final test pass.
+- 57 automated checks passed, 0 failed.
+
+Open issues / risks:
+
+1. Launcher opens only homevault.local
+- File: start_homevault.py
+- Even if Nginx, Bonjour, or mDNS is missing, the launcher still opens http://homevault.local.
+- On a fresh machine this can open a dead page even when Flask is running on 127.0.0.1:5000.
+
+2. Launcher asks for admin every time
+- File: start_homevault.py
+- If the user cancels the UAC prompt, HomeVault does not continue in a limited mode.
+
+3. Launcher depends on C:\nginx
+- File: start_homevault.py
+- Nginx and ip_watcher.py are still expected at C:\nginx.
+- On another PC, launcher features that depend on them will fail or be skipped if those files are missing.
+
+4. .bat launcher uses relative paths only
+- File: HomeVault.bat
+- It does not change to its own folder first.
+- If run from a shortcut or different working directory, startup can break.
+
+5. Requirements install runs on every launcher start
+- File: start_homevault.py
+- This can slow startup and can behave badly on offline machines.
+
+6. mDNS is working on the PC side but not guaranteed on every device
+- File: mdns_broadcast.py / network environment
+- Local dns-sd testing worked, but other-device .local access still depends on router, phone browser, and network discovery behavior.
+- Safe fallback remains the direct LAN IP.
+
+7. Some mojibake/encoding garbage is still present
+- Files seen during review: base.html and some other older files
+- This is mainly a source-cleanliness issue now, not a core app logic bug.
+
+8. CSRF protection is still not implemented
+- This was already a known low-priority limitation for this local project.
+- Fine for submission notes, but still worth mentioning as a limitation.
+
+Status of earlier noted items:
+- .env secret key setup: fixed
+- .env debug mode setup: fixed
+- mDNS interfaces=[ip] improvement: fixed
+- local PC-side homevault.local broadcasting: working
+- cross-device homevault.local: still environment-dependent
