@@ -1,4 +1,4 @@
-﻿# Python
+# Python
 venv/
 __pycache__/
 *.pyc
@@ -11,27 +11,33 @@ homevault.db
 
 # Log files
 *.log
-server.out.log
-server.err.log
-
-# Playwright test artifacts
-.playwright-cli/
 
 # Storage folders (user uploaded files, don't push)
 storage/
 static/thumbnails/
 
-# Windows
-Thumbs.db
-desktop.ini
-CHEAT_SHEET.txt
-PROJECT_CONTEXT.txt
-VIVA_NOTES.txt
+# Environment and secrets
 .env
 *.env
 
-.env
-*.env
+# Dev / test artifacts
+issues.txt
+mobile_dashboard_dom.html
+mobile_dashboard_preview.html
+test_merge.docx
+PROJECT_CONTEXT.txt
+CHEAT_SHEET.txt
+VIVA_NOTES.txt
+
+# Build artifacts
 dist/
 build/
 *.spec
+.requirements_ready
+
+# Playwright test artifacts
+.playwright-cli/
+
+# Windows
+Thumbs.db
+desktop.ini

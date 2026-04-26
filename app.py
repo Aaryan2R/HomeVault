@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 import os
 import uuid
 import mimetypes
+from werkzeug.utils import secure_filename
 
 # Load .env values before the app starts
 load_dotenv()
@@ -329,9 +330,13 @@ def upload():
         if file.filename == '':
             continue
 
-        folder      = get_folder(file.filename)
-        ext         = file.filename.rsplit('.', 1)[-1].lower()
-        unique_name = str(uuid.uuid4()) + '.' + ext
+        safe_name   = secure_filename(file.filename)
+        if not safe_name:
+            continue
+
+        folder      = get_folder(safe_name)
+        ext         = safe_name.rsplit('.', 1)[-1].lower() if '.' in safe_name else ''
+        unique_name = str(uuid.uuid4()) + ('.' + ext if ext else '')
         save_path   = os.path.join(BASE_DIR, 'storage', folder, unique_name)
         upload_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 

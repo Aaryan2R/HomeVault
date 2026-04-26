@@ -1,22 +1,27 @@
-# HomeVault 🗄️
+# HomeVault ⚡
 
-A lightweight self-hosted private cloud storage system for home and family use.
+### Your Personal Cloud Storage — Private, Local, Yours.
+
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/Aaryan2R/HomeVault)
+[![Python](https://img.shields.io/badge/python-3.10+-green.svg)](https://www.python.org/)
+[![License](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)]()
+
+A lightweight self-hosted cloud storage system for home and family use.
 Think Google Drive — but local, private, and fully yours. No internet required,
 no monthly fees, no data leaving your house.
 
-Built as a BCA final year project using Python, Flask, and SQLite.
+<br>
 
----
-
-## What is HomeVault?
+## Why HomeVault?
 
 Most people either pay for cloud storage or dump everything into one messy folder.
 HomeVault gives you organized, private, local storage with a clean browser-based UI.
 
 Upload files from any device on your home network. HomeVault automatically sorts
-them into Photos, Videos, Documents, and Others — generates thumbnails for images,
+them into **Photos, Videos, Documents, and Others** — generates thumbnails for images,
 stores metadata in SQLite, and lets you search, filter, preview, download, and manage
-everything from a modern dashboard that looks and feels like a real cloud storage app.
+everything from a modern dashboard that looks and feels like a real cloud app.
 
 Inspired by Google Drive and Google Photos, but runs entirely on your own hardware.
 
@@ -24,57 +29,61 @@ Inspired by Google Drive and Google Photos, but runs entirely on your own hardwa
 
 ## Features
 
-### Core Storage
-- 📤 Multi-file upload with real-time progress bars per file (drag and drop supported)
-- 📁 Auto-categorization into Photos, Videos, Documents, and Others
-- 🖼️ Automatic thumbnail generation for photo uploads
-- 👁️ File preview in browser — images, videos, PDFs open without downloading
-- ⬇️ Download files from any device on your local network
-- 🔍 Search files by name
-- 🗂️ Filter files by category
-- 🔲 Grid and list view toggle (like Google Drive)
-- 🗑️ Trash system — soft delete with restore, permanent delete, and empty trash
-- ✏️ Rename files inline by double clicking the filename
-- 📅 Files grouped by date — Today, Yesterday, This Week, Month Year
-- 🔃 Sort by newest, oldest, name, size, or actual photo date (EXIF metadata)
+### 📦 Core Storage
+- Multi-file upload with real-time per-file progress bars
+- Drag-and-drop upload support
+- Auto-categorization into Photos, Videos, Documents, and Others
+- Automatic thumbnail generation for photo uploads
+- In-browser preview — images, videos, and PDFs open without downloading
+- Download files from any device on your local network
+- Search files by name
+- Filter by category
+- Grid and list view toggle
+- Sort by date, name, size, or actual photo date (EXIF metadata)
+- Files grouped by date — Today, Yesterday, This Week, Month Year
 
-### Users and Access
-- 👤 User authentication — login, register, logout
-- 👨‍👩‍👧 Multi-user support — each user has their own private space
-- 🔐 Role-based access — Admin sees everything, Members see only their own files
-- 🤝 Shared files — mark any file as public so all users on the network can access it
-- 🛡️ Permission checks — members cannot download, preview, or modify other users' files
-- 👁️ File owner name shown on every file row
+### 🗑️ File Management
+- Trash system with soft delete, restore, and permanent delete
+- Empty trash to bulk-remove all trashed files
+- Rename files inline by double-clicking the filename
 
-### Admin Panel
-- 📊 Dashboard with total users, total files, storage used, and trash count
-- 👥 Per-user file count and storage breakdown
-- 🔍 View any user's files directly
+### 👥 Users & Access
+- User authentication — login, register, logout
+- Multi-user support — each user has their own private space
+- Role-based access — Admin sees everything, Members see only their own files
+- Shared files — mark any file as public so all users on the network can access it
+- Permission checks on every route — members cannot access other users' files
 
-### Settings
-- 🔑 Change password from settings page
-- 🌙 Dark mode toggle with persistence
-- 💾 Personal storage breakdown per user
+### 🛡️ Admin Panel
+- Dashboard with total users, total files, storage used, and trash count
+- Per-user file count and storage breakdown
+- View any user's files directly
+- Create and manage user accounts
 
-### UI and Experience
-- 🌙 Professional dark mode — dark slate blues, not pure black, remembers preference
-- 📱 Fully responsive — works on desktop, tablet, and mobile
-- 📊 Storage breakdown panel — see how much space each category uses
-- 🎨 Modern dashboard design with sidebar navigation and category cards
-- 🔢 File count badges on sidebar navigation items
+### ⚙️ Settings
+- Change password from settings page
+- Dark mode toggle with persistence across sessions
+- Personal storage breakdown per user
 
-### Network Access
-- 🏠 Local network access via Nginx reverse proxy — no port number in URL
-- 🔄 Auto IP watcher — detects network changes and updates Nginx automatically
-- 🌐 Two access modes — Local Only (homevault.local) or Anywhere Access (Cloudflare Tunnel)
+### 🎨 UI & Experience
+- Professional dark mode — dark slate blues, not pure black
+- Fully responsive — works on desktop, tablet, and mobile
+- Modern dashboard with sidebar navigation and category cards
+- File count badges on navigation items
+- Storage breakdown panel with visual progress bar
 
-### Security
+### 🌐 Network Access
+- Access from any device on the same WiFi via local IP
+- mDNS broadcasting — access via `http://homevault.local` (requires Bonjour)
+- Nginx reverse proxy support — clean URLs without port numbers
+
+### 🔒 Security
 - Passwords hashed with Werkzeug — never stored as plain text
 - Session-based authentication with signed cookies
-- Secret key stored in environment variable — never hardcoded in source
+- Secret key stored in `.env` — never hardcoded in source
 - File access permission-checked on every route
 - Trashed files fully blocked from download, preview, and share
-- All state-changing actions use POST requests — not GET links
+- All state-changing actions use POST requests
 - Files never leave your local machine or network
 
 ---
@@ -83,13 +92,110 @@ Inspired by Google Drive and Google Photos, but runs entirely on your own hardwa
 
 | Layer      | Technology                        |
 |------------|-----------------------------------|
-| Backend    | Python, Flask                     |
-| Database   | SQLite (built into Python)        |
+| Backend    | Python 3, Flask                   |
+| Database   | SQLite                            |
 | Frontend   | HTML, CSS, Jinja2, JavaScript     |
 | Images     | Pillow (thumbnail generation)     |
 | Auth       | Flask sessions, Werkzeug hashing  |
-| Network    | Nginx reverse proxy               |
+| Network    | Nginx reverse proxy, Zeroconf     |
 | Config     | python-dotenv                     |
+
+---
+
+## Project Structure
+
+```
+HomeVault/
+├── app.py                   # Flask server — all routes and logic
+├── database.py              # SQLite layer — all database operations
+├── thumbnailer.py           # Thumbnail generation using Pillow
+├── mdns_broadcast.py        # mDNS broadcasting for homevault.local
+├── start_homevault.py       # Windows launcher — starts all services
+├── HomeVault.bat            # One-click startup script
+├── requirements.txt         # Python dependencies
+├── .env                     # Secret key and config (not in Git)
+├── templates/
+│   ├── base.html            # Shared sidebar layout and preview modal
+│   ├── index.html           # Main file dashboard
+│   ├── login.html           # Login page
+│   ├── register.html        # Registration page
+│   ├── trash.html           # Trash / deleted files
+│   ├── settings.html        # User settings (account, appearance, storage)
+│   ├── admin_users.html     # Admin panel with user stats
+│   └── admin_view_user.html # Admin — view one user's files
+├── static/
+│   ├── css/style.css        # Full design system with light/dark themes
+│   ├── js/app.js            # Client-side logic (upload, preview, menus, etc.)
+│   ├── favicon.svg          # App icon (SVG)
+│   ├── favicon.ico          # App icon (ICO fallback)
+│   └── thumbnails/          # Auto-generated photo thumbnails (not in Git)
+└── storage/
+    ├── Photos/              # Uploaded photos (not in Git)
+    ├── Videos/              # Uploaded videos (not in Git)
+    ├── Documents/           # Uploaded documents (not in Git)
+    └── Others/              # Other file types (not in Git)
+```
+
+---
+
+## Installation
+
+### Quick Start
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/Aaryan2R/HomeVault.git
+cd HomeVault
+
+# 2. Create a virtual environment
+python -m venv venv
+
+# 3. Activate it
+# Windows PowerShell:
+venv\Scripts\Activate.ps1
+# Windows CMD:
+venv\Scripts\activate.bat
+# Linux / Mac:
+source venv/bin/activate
+
+# 4. Install dependencies
+pip install -r requirements.txt
+
+# 5. Create your .env file
+python -c "import secrets; print('SECRET_KEY=' + secrets.token_hex(32))" > .env
+echo FLASK_DEBUG=false >> .env
+
+# 6. Run the app
+python app.py
+```
+
+The app automatically creates all required storage folders on first run.
+
+### Open in Browser
+
+```
+http://127.0.0.1:5000
+```
+
+### First Time Setup
+
+Navigate to `/register` — the first account you create is automatically set as **Admin**.
+After that, only the Admin can create new accounts from the **Manage Users** page.
+
+### Access from Other Devices
+
+Any device on the same WiFi can access HomeVault at:
+```
+http://<your-pc-ip>:5000
+```
+
+With Nginx and mDNS running (via `start_homevault.py` or `HomeVault.bat`):
+```
+http://homevault.local
+```
+
+> **Note:** The current launcher expects Nginx at `C:\nginx\nginx.exe`. This is acceptable
+> for the current release. A proper configurable installer is planned for v1.1.
 
 ---
 
@@ -98,239 +204,106 @@ Inspired by Google Drive and Google Photos, but runs entirely on your own hardwa
 HomeVault uses two storage layers:
 
 ```
-Uploaded file → saved to disk under storage/Photos/ (or Videos, Documents, Others)
+Uploaded file → saved to disk under storage/{category}/
 File metadata → saved to SQLite database (homevault.db)
 ```
 
-When you upload a file:
-1. Flask checks if you are logged in
+**Upload flow:**
+1. Flask verifies the user is logged in
 2. File type is detected from the extension
-3. A unique UUID filename is generated to avoid conflicts
-4. File is saved to the correct folder on disk
-5. Metadata (original name, size, category, date, owner) is saved to SQLite
-6. A thumbnail is generated in the background if the file is a photo
-7. XHR upload shows real-time progress bar in the UI
+3. A unique UUID filename is generated to prevent conflicts
+4. File is saved to the correct category folder on disk
+5. Metadata (original name, size, category, date, owner) is stored in SQLite
+6. If the file is a photo, a 200×200 thumbnail is generated
+7. The browser shows real-time upload progress via XHR
 
 Each file has two names in the database:
-- `filename` — the UUID name on disk (prevents conflicts between users)
+- `filename` — UUID name on disk (prevents conflicts between users)
 - `original_name` — the name the user uploaded (shown in the UI)
 
 ---
 
 ## User Roles
 
-| Role   | What they can do                                                    |
+| Role   | Permissions                                                         |
 |--------|---------------------------------------------------------------------|
-| Admin  | See and manage all users files, create accounts, access everything  |
+| Admin  | See and manage all users' files, create accounts, access everything |
 | Member | See only their own files and files marked as shared                 |
 
-The first user to register automatically becomes Admin.
-After that, only the Admin can create new accounts from the Manage Users page.
-
 ---
 
-## Network Access Modes
+## Security
 
-HomeVault supports two access modes configured during installation:
-
-### Local Only (Default)
-- Access via `http://homevault.local` from any device on the same WiFi
-- Uses mDNS broadcasting via Bonjour — zero configuration on any device
-- Data never leaves your home network
-- No internet dependency
-
-### Anywhere Access (Optional)
-- Access via `https://yourname.duckdns.org` from anywhere in the world
-- Uses Cloudflare Tunnel — free, no port forwarding, no router changes
-- HTTPS included automatically
-- Switch between modes anytime from the Settings page
-
----
-
-## Project Structure
-
-```text
-HomeVault/
-├── app.py                   # Flask server — all routes and logic
-├── database.py              # SQLite operations — all database functions
-├── thumbnailer.py           # Thumbnail generation using Pillow
-├── mdns_broadcast.py        # mDNS broadcasting for homevault.local
-├── ip_watcher.py            # Auto-updates Nginx when IP changes
-├── requirements.txt         # Python dependencies
-├── .env                     # Secret key and config (never committed to Git)
-├── templates/
-│   ├── base.html            # Shared sidebar and layout
-│   ├── index.html           # Main file dashboard
-│   ├── login.html           # Login page
-│   ├── register.html        # Register page
-│   ├── trash.html           # Trash / deleted files
-│   ├── settings.html        # User settings page
-│   ├── admin_users.html     # Admin panel with stats
-│   └── admin_view_user.html # Admin — view one user's files
-├── static/
-│   ├── css/
-│   │   └── style.css        # Full design system with dark mode
-│   ├── js/
-│   │   └── app.js           # Dark mode, menus, preview, grid toggle, upload progress
-│   └── thumbnails/          # Auto-generated photo thumbnails
-└── storage/
-    ├── Photos/
-    ├── Videos/
-    ├── Documents/
-    └── Others/
-```
-
----
-
-## Installation
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/Aaryan2R/HomeVault.git
-cd HomeVault
-```
-
-### 2. Create and activate a virtual environment
-
-```bash
-python -m venv venv
-```
-
-Windows PowerShell:
-```powershell
-venv\Scripts\Activate.ps1
-```
-
-Windows Command Prompt:
-```bat
-venv\Scripts\activate.bat
-```
-
-Linux / Mac:
-```bash
-source venv/bin/activate
-```
-
-### 3. Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Create environment file
-
-Generate a secret key and create your `.env` file:
-
-```powershell
-python -c "import secrets; print('SECRET_KEY=' + secrets.token_hex(32))" > .env
-echo FLASK_DEBUG=false >> .env
-```
-
-### 5. Run the app
-
-```bash
-python app.py
-```
-
-The app automatically creates all required storage folders on startup.
-No manual folder creation needed.
-
-### 6. Open in your browser
-
-```
-http://127.0.0.1:5000
-```
-
-### 7. First time setup
-
-Go to `/register` — the first account you create is automatically set as Admin.
-After that, only the Admin can create new accounts from the Manage Users page.
-
-### 8. Access from other devices on your home network
-
-With Nginx running, other devices on the same WiFi can access HomeVault at:
-
-```
-http://192.168.x.x
-```
-
-Or with mDNS broadcasting running:
-
-```
-http://homevault.local
-```
-
----
-
-## Security Notes
-
-- Passwords are hashed using Werkzeug — never stored as plain text
-- Secret key stored in `.env` file — never in source code, never on GitHub
+- Passwords hashed with Werkzeug — never stored as plain text
+- Secret key stored in `.env` — never in source code, never on GitHub
 - Sessions are cookie-based and signed with the secret key
 - File access is permission-checked on every route
 - Trashed files are fully blocked from download, preview, and share
-- All state-changing actions use POST requests — not GET links
+- All state-changing actions use POST requests
+- Debug mode disabled by default
 - Files never leave your local machine or network
-- Debug mode disabled by default — only enabled via `.env` for development
 
 ---
 
-## Notes
-
-- This is a local-first project. Files stay on the machine running the app.
-- `venv/`, `storage/`, `static/thumbnails/`, `homevault.db`, and `.env` are excluded
-  from version control via `.gitignore`.
-- The repository contains only source code, templates, and configuration files.
-
----
-
-## Upcoming Improvements
-
-### Remote Access
-- [ ] Cloudflare Tunnel integration — access HomeVault from anywhere for free
-- [ ] DuckDNS setup — free custom subdomain (yourname.duckdns.org)
-- [ ] Network tab in Settings — switch between Local Only and Anywhere Access
-- [ ] Automatic DuckDNS registration in installer
-
-### Installer
-- [ ] PyInstaller packaging — convert app to portable .exe (no Python needed)
-- [ ] NSSM Windows Service — Flask, Nginx, IP watcher start automatically on boot
-- [ ] Inno Setup — full HomeVault_Setup.exe one-click Windows installer
-- [ ] Automatic static IP detection and configuration
-- [ ] Advanced network settings for power users with restore/rollback option
-- [ ] Bonjour/mDNS auto-registration for homevault.local
-
-### Features
-- [ ] Google Photos style masonry grid — photos display in natural aspect ratios
-- [ ] User-created folders — organise files into custom folders like Google Drive
-- [ ] Move files between folders from the UI
-- [ ] Pagination — load files in batches for large collections
-- [ ] Encrypted personal vault per user (locker feature)
-- [ ] File sharing via generated links (share with non-users)
-- [ ] Android app — automatic background photo and video backup
-- [ ] Better error pages (custom 404, 403, 500)
-
-### Post-Submission
-- [ ] EXIF metadata stored in database on upload for faster sorting
-- [ ] Production server mode (Waitress instead of Flask dev server)
-- [ ] CSRF protection on all state-changing routes
-
----
-
-## Why Not Just Use Google Drive?
+## Comparison
 
 | Feature              | Google Drive     | HomeVault          |
 |----------------------|------------------|--------------------|
-| Cost                 | Paid after 15 GB | Free               |
+| Cost                 | Paid after 15 GB | Free forever       |
 | Privacy              | Data on Google   | Data stays with you|
 | Internet required    | Yes              | No                 |
 | Multi-user support   | Paid plans only  | Built in           |
 | File preview         | Yes              | Yes                |
 | Dark mode            | Yes              | Yes                |
-| Remote access        | Yes              | Planned (free)     |
 | Custom control       | No               | Full               |
-| Setup complexity     | None             | Minimal            |
+| Setup complexity     | None             | One-time, minimal  |
+
+---
+
+## Roadmap
+
+This is the first stable release of HomeVault (**v1.0.0**). The project will now receive
+versioned updates going forward, like any standard open-source software.
+
+### v1.1 — Launcher & Startup (Planned)
+- [ ] Proper Windows launcher application (replacing the `.bat` file)
+- [ ] Auto-start with Windows on boot
+- [ ] Windows `.exe` installer via Inno Setup (one-click install, no Python needed)
+- [ ] Configurable Nginx path (remove hardcoded `C:\nginx` dependency)
+
+### v1.2 — Features & Quality
+- [ ] CSRF protection on all state-changing routes
+- [ ] Production-grade server (Waitress instead of Flask dev server)
+- [ ] Custom error pages (404, 403, 500)
+- [ ] Pagination for large file collections
+- [ ] EXIF metadata cached in database for faster photo-date sorting
+
+### Future
+- [ ] User-created folders and file organization
+- [ ] Google Photos style masonry grid for photos
+- [ ] Remote access via Cloudflare Tunnel (free, no port forwarding)
+- [ ] Encrypted personal vault per user
+- [ ] File sharing via generated links
+- [ ] Android companion app for automatic photo/video backup
+
+---
+
+## Changelog
+
+### v1.0.0 — Initial Stable Release
+- Full file management: upload, download, preview, rename, trash, restore, permanent delete
+- Multi-user system with admin and member roles
+- Auto-categorization and thumbnail generation
+- Search, filter, sort (including EXIF photo date)
+- Grid and list view toggle
+- File sharing between users
+- Professional dark mode with persistence
+- Responsive design for desktop, tablet, and mobile
+- Admin panel with user management and storage stats
+- Settings page with password change and storage breakdown
+- mDNS broadcasting for `homevault.local` access
+- Nginx reverse proxy support
+- One-click launcher with system tray integration
 
 ---
 

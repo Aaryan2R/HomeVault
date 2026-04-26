@@ -17,11 +17,15 @@ def is_admin():
 
 
 def restart_as_admin():
-    # Start the same script again with admin rights.
-    ctypes.windll.shell32.ShellExecuteW(
+    # Try starting the same script again with admin rights.
+    # If user cancels UAC, just keep going without admin-only setup.
+    result = ctypes.windll.shell32.ShellExecuteW(
         None, 'runas', sys.executable, ' '.join(sys.argv), None, 1
     )
-    sys.exit()
+    if result > 32:
+        sys.exit()
+    print('Admin request was skipped, continuing without it')
+    return False
 
 
 # Main paths used by the launcher script
@@ -32,6 +36,7 @@ MDNS       = os.path.join(BASE_DIR, 'mdns_broadcast.py')
 VENV_PY    = os.path.join(BASE_DIR, 'venv', 'Scripts', 'python.exe')
 PYTHON     = VENV_PY if os.path.exists(VENV_PY) else sys.executable
 APP        = os.path.join(BASE_DIR, 'app.py')
+REQ_FLAG   = os.path.join(BASE_DIR, '.requirements_ready')
 
 # Keep process objects here so stop_all() can close them later
 procs = {}
@@ -43,11 +48,23 @@ def install_requirements():
     if not os.path.exists(req):
         print('requirements.txt not found, skipping')
         return
+    if os.path.exists(REQ_FLAG):
+        try:
+            if os.path.getmtime(REQ_FLAG) >= os.path.getmtime(req):
+                print('Requirements already checked, skipping')
+                return
+        except OSError:
+            pass
     print('Checking requirements...')
     subprocess.run(
         [PYTHON, '-m', 'pip', 'install', '-r', req, '-q'],
         check=False
     )
+    try:
+        with open(REQ_FLAG, 'w', encoding='utf-8') as f:
+            f.write('ok')
+    except OSError:
+        pass
     print('Requirements OK')
 
 
@@ -188,7 +205,7 @@ def stop_all():
 
 
 # Step 7: use a tray icon so the app can stay running
-def run_tray():
+def run_tray(open_url):
     try:
         import pystray
         import PIL.Image
@@ -209,7 +226,7 @@ def run_tray():
     draw.text((14, 18), 'HV', fill='white')
 
     def on_open(icon, item):
-        webbrowser.open('http://homevault.local')
+        webbrowser.open(open_url)
 
     def on_stop(icon, item):
         stop_all()
@@ -240,8 +257,8 @@ def main():
 
     install_requirements()
 
-    check_nginx()
-    check_bonjour()
+    nginx_ok = check_nginx()
+    bonjour_ok = check_bonjour()
 
     setup_firewall()
 
@@ -258,11 +275,16 @@ def main():
 
     # Open the browser after Flask starts
     if flask_ok:
+        open_url = 'http://homevault.local'
+        if not nginx_ok or not bonjour_ok:
+            open_url = 'http://127.0.0.1:5000'
         time.sleep(1)
-        webbrowser.open('http://homevault.local')
+        webbrowser.open(open_url)
+    else:
+        open_url = 'http://127.0.0.1:5000'
 
     # Keep the launcher alive in the tray
-    run_tray()
+    run_tray(open_url)
 
 
 if __name__ == '__main__':

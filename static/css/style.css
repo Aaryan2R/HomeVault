@@ -148,12 +148,12 @@ a {
 .sidebar-brand .brand-icon {
     width: 36px;
     height: 36px;
-    background: var(--accent);
+    background: transparent;
     border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
+    font-size: 32px;
     color: white;
 }
 
@@ -961,12 +961,12 @@ a {
 .auth-brand .brand-icon {
     width: 40px;
     height: 40px;
-    background: var(--accent);
+    background: transparent;
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
+    font-size: 38px;
     color: white;
 }
 
@@ -1677,4 +1677,185 @@ a {
 
 @media (max-width: 480px) {
     .admin-stats { grid-template-columns: 1fr; }
+}
+
+/* ─── Mobile Fix — Right Panel and Upload Zone ───────────── */
+@media (max-width: 768px) {
+
+    /* Stack the entire layout vertically on mobile */
+    .app-layout {
+        flex-direction: column;
+    }
+
+    /* Right panel comes below main content, full width */
+    .right-panel {
+        position: static;
+        width: 100%;
+        height: auto;
+        border-left: none;
+        border-top: 1px solid var(--border-color);
+        padding: 16px;
+        overflow-y: visible;
+    }
+
+    /* Upload zone fills full width */
+    .upload-zone {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* Storage card full width */
+    .storage-card {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* Main content takes full width */
+    .main-content {
+        margin-left: 0;
+        margin-right: 0;
+        width: 100%;
+        padding: 72px 12px 16px;
+    }
+
+    /* Search bar full width */
+    .search-input-wrapper {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .search-bar form {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    /* Search input full width on mobile, button below */
+    .search-input-wrapper {
+        width: 100%;
+        flex: none;
+    }
+
+    .search-bar .btn-primary {
+        width: auto;
+        min-width: 80px;
+    }
+
+    /* Category cards 2 columns on mobile */
+    .categories-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    /* Filter pills scroll horizontally */
+    .filter-pills {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 6px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* View tabs scroll horizontally */
+    .view-tabs {
+        overflow-x: auto;
+        width: 100%;
+    }
+
+    /* File list rows simpler on mobile */
+    .file-list-header {
+        display: none;
+    }
+
+    .file-row {
+        grid-template-columns: 44px 1fr 50px;
+    }
+
+    /* Hide type and size columns on mobile */
+    .file-row .file-meta {
+        display: none;
+    }
+
+    /* Hide share badge on mobile */
+    .file-row > div:nth-child(5) {
+        display: none;
+    }
+
+    /* Admin stats 2 columns on mobile */
+    .admin-stats {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    /* Settings tabs scroll */
+    .settings-tabs-row {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+    }
+
+    /* Page body padding */
+    .page-body {
+        padding: 8px;
+    }
+
+    /* Topbar search full width */
+    .topbar {
+        padding: 0 10px;
+        flex-wrap: wrap;
+        height: auto;
+        gap: 8px;
+        padding-top: 8px;
+        padding-bottom: 8px;
+    }
+
+    .search-wrap {
+        width: 100%;
+        max-width: 100%;
+        order: 2;
+    }
+
+    /* Mobile menu button visible */
+    .mobile-menu-btn {
+        display: flex;
+        order: 1;
+    }
+
+    /* Upload panel button full width */
+    .upload-btn {
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    /* Grid view smaller cards on mobile */
+    .file-list.grid-view {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .file-list.grid-view .file-icon {
+        width: 60px;
+        height: 60px;
+    }
+
+    .file-list.grid-view .file-icon img {
+        width: 60px;
+        height: 60px;
+    }
+}
+
+/* Extra small phones */
+@media (max-width: 400px) {
+    .categories-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .category-card {
+        padding: 12px 10px;
+    }
+
+    .category-card .cat-name {
+        font-size: 13px;
+    }
+
+    .admin-stats {
+        grid-template-columns: 1fr !important;
+    }
 }

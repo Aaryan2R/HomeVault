@@ -1,46 +1,58 @@
 HomeVault Final Review Issues
 
 Main result:
-- Core Flask file-management flows tested well in the isolated final test pass.
-- 57 automated checks passed, 0 failed.
+- Core Flask file-management flows still test well.
+- Earlier isolated final test pass: 57 automated checks passed, 0 failed.
 
-Open issues / risks:
+Issue-by-issue status after the latest pass:
 
 1. Launcher opens only homevault.local
+- Status: fixed
 - File: start_homevault.py
-- Even if Nginx, Bonjour, or mDNS is missing, the launcher still opens http://homevault.local.
-- On a fresh machine this can open a dead page even when Flask is running on 127.0.0.1:5000.
+- If Nginx or Bonjour is missing, launcher now falls back to http://127.0.0.1:5000.
 
 2. Launcher asks for admin every time
+- Status: improved
 - File: start_homevault.py
-- If the user cancels the UAC prompt, HomeVault does not continue in a limited mode.
+- It still requests admin first, but if UAC is cancelled the app now continues without admin-only firewall setup.
 
 3. Launcher depends on C:\nginx
+- Status: accepted for submission
 - File: start_homevault.py
-- Nginx and ip_watcher.py are still expected at C:\nginx.
-- On another PC, launcher features that depend on them will fail or be skipped if those files are missing.
+- This path is still hardcoded, but it is now documented in README as a known requirement for the submission build.
 
 4. .bat launcher uses relative paths only
+- Status: fixed
 - File: HomeVault.bat
-- It does not change to its own folder first.
-- If run from a shortcut or different working directory, startup can break.
+- The batch file now switches to its own folder first with cd /d "%~dp0".
 
 5. Requirements install runs on every launcher start
+- Status: fixed
 - File: start_homevault.py
-- This can slow startup and can behave badly on offline machines.
+- Launcher now uses a simple .requirements_ready flag file so it does not fully rerun installs every time.
 
 6. mDNS is working on the PC side but not guaranteed on every device
+- Status: accepted for submission
 - File: mdns_broadcast.py / network environment
-- Local dns-sd testing worked, but other-device .local access still depends on router, phone browser, and network discovery behavior.
+- Local broadcasting works, but cross-device .local access still depends on router, phone browser, and discovery behavior.
 - Safe fallback remains the direct LAN IP.
 
-7. Some mojibake/encoding garbage is still present
-- Files seen during review: base.html and some other older files
-- This is mainly a source-cleanliness issue now, not a core app logic bug.
+7. Encoding garbage in some templates/files
+- Status: fixed enough for submission
+- Visible broken text in the project UI was cleaned up.
+- Affected project files were also re-saved as UTF-8.
 
 8. CSRF protection is still not implemented
-- This was already a known low-priority limitation for this local project.
-- Fine for submission notes, but still worth mentioning as a limitation.
+- Status: accepted for submission
+- This remains a known low-priority limitation for this local-network project.
+
+New issue found in mobile testing:
+
+9. Upload panel can feel missing on mobile
+- Status: real UI issue found
+- Files: base.html, index.html, style.css
+- The upload panel lives in the right panel, but the app layout still stays horizontal on small screens.
+- Because of that, the upload section can end up off-screen to the right on phones instead of stacking clearly below the file list.
 
 Status of earlier noted items:
 - .env secret key setup: fixed
