@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en">
-{# Base layout used on most logged-in pages #}
+{# Main layout used after login #}
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -17,23 +17,23 @@
     </head>
     <body>
 
-        {# mobile header #}
+        {# top bar for phones #}
         <div class="mobile-header">
             <button class="hamburger-btn" onclick="openSidebar()" aria-label="Open menu">&#9776;</button>
             <span class="brand-text">HomeVault</span>
-            <div style="width: 32px;"></div> {# spacer #}
+            <div style="width: 32px;"></div> {# small spacer #}
         </div>
 
-        {# dark overlay behind the mobile sidebar #}
+        {# dark overlay behind the phone sidebar #}
         <div class="sidebar-overlay" onclick="closeSidebar()"></div>
 
-        {# whole app layout #}
+        {# full app layout #}
         <div class="app-layout">
 
             {# left sidebar #}
             <aside class="sidebar">
 
-                {# logo and current user #}
+                {# app name and current user info #}
                 <div class="sidebar-header">
                     <div class="sidebar-brand">
                         <div class="brand-icon">&#127968;</div>
@@ -105,7 +105,7 @@
                     {% endif %}
                 </nav>
 
-                {# logout and theme toggle #}
+                {# logout button and theme switch #}
                 <div class="sidebar-footer">
                     <div class="theme-toggle">
                         <div class="toggle-label">
@@ -130,12 +130,12 @@
                 </div>
             </aside>
 
-            {# page body goes here #}
+            {# main page content goes here #}
             <main class="main-content">
                 {% block content %}{% endblock %}
             </main>
 
-            {# optional right side panel #}
+            {# optional right panel #}
             {% block right_panel %}{% endblock %}
 
         </div>

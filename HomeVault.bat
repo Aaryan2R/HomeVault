@@ -1,3 +1,7 @@
 @echo off
 cd /d "%~dp0"
-start "" "venv\Scripts\pythonw.exe" "start_homevault.py"
+if exist "venv\Scripts\pythonw.exe" (
+    start "" "venv\Scripts\pythonw.exe" "%~dp0launcher.py"
+) else (
+    start "" pythonw "%~dp0launcher.py"
+)

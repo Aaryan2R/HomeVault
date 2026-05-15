@@ -15,13 +15,13 @@ import uuid
 import mimetypes
 from werkzeug.utils import secure_filename
 
-# Load .env values before the app starts
+# Load .env first so config is ready before the app starts.
 load_dotenv()
 
 app = Flask(__name__)
-# Read secret key from environment variable
-# If not found fall back to a random key
-# (random key means sessions reset on restart — fine for dev)
+# Try to use the secret key from .env.
+# If it is missing, make a random one for now.
+# That works for local testing, but sessions reset after restart.
 app.secret_key = os.environ.get('SECRET_KEY') or os.urandom(24)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -29,12 +29,12 @@ app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, 'storage')
 app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024
 
 
-# small helper functions
+# Small helper functions
 
 def get_folder(filename):
     """
-    Decides which category a file belongs to based on its extension.
-    For example: photo.jpg → 'Photos', report.pdf → 'Documents'
+    Put a file into a category based on its extension.
+    Example: photo.jpg goes to Photos, report.pdf goes to Documents.
     """
     ext = filename.rsplit('.', 1)[-1].lower()
     photos    = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'heic']
@@ -100,8 +100,8 @@ def group_files_by_date(files, sort='date_desc'):
 
 
 def get_exif_date(file_path):
-    # Try to read the taken date from photo EXIF data.
-    # If nothing is found, return None.
+    # Try to read the photo date from EXIF.
+    # If it is not there, just return None.
     try:
         from PIL import Image
         from PIL.ExifTags import TAGS
@@ -123,7 +123,7 @@ def get_exif_date(file_path):
         return None
 
 
-# Make helper functions available in Jinja templates
+# Make these helpers usable inside the templates too.
 app.jinja_env.globals['format_size'] = format_size
 app.jinja_env.globals['get_username'] = get_username_by_id
 
@@ -144,7 +144,7 @@ def ensure_folders():
         os.makedirs(folder, exist_ok=True)
 
 
-# Simple login-check decorator used on protected routes
+# Simple login check decorator for protected pages.
 
 def login_required(f):
     @wraps(f)
@@ -166,11 +166,11 @@ def admin_required(f):
     return decorated
 
 
-# authentication routes
+# Authentication routes
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    # If the user is already logged in, send them to the dashboard
+    # If the user is already logged in, just send them to the dashboard.
     if 'user_id' in session:
         return redirect(url_for('home'))
 
@@ -195,7 +195,7 @@ def login():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    # The first account is open registration.
+    # Anyone can make the very first account.
     # After that, only an admin should add more users.
     first_user = count_users() == 0
 
@@ -217,7 +217,7 @@ def register():
         elif len(password) < 4:
             error = 'Password must be at least 4 characters'
         else:
-            # The very first account becomes admin
+            # The very first account becomes admin automatically.
             if first_user:
                 role = 'admin'
 
@@ -227,7 +227,7 @@ def register():
                 error = 'Username already taken'
             else:
                 if first_user:
-                    # Log in immediately after creating the first account
+                    # Log in right after creating the first account
                     session['user_id']  = user_id
                     session['username'] = username
                     session['role']     = 'admin'
@@ -244,7 +244,7 @@ def logout():
     return redirect(url_for('login'))
 
 
-# main app routes
+# Main app routes
 
 @app.route('/')
 @login_required
@@ -282,7 +282,7 @@ def home():
         else:
             files = get_files_by_owner(user_id, sort=sort)
 
-    # EXIF date sort is done after the DB query because the date lives in the file itself
+    # EXIF sorting happens after the DB query because that date comes from the real file.
     if sort in ('exif_desc', 'exif_asc'):
         def exif_sort_key(file):
             file_path = os.path.join(BASE_DIR, 'storage',
@@ -293,8 +293,8 @@ def home():
         reverse = (sort == 'exif_desc')
         files   = sorted(files, key=exif_sort_key, reverse=reverse)
 
-    # Right panel stats use only the current user in normal view.
-    # Admin can see global stats in the all-files view.
+    # In normal view the right panel shows only this user's stats.
+    # In all-files view the admin can see overall stats.
     if view == 'mine' or role != 'admin':
         stats = get_storage_stats(owner_id=user_id)
     else:
@@ -371,11 +371,11 @@ def download(file_id):
     if file is None:
         return 'File not found', 404
 
-    # Files in trash should not open from here
+    # Do not open files that are in trash
     if file['is_deleted']:
         return 'File not found', 404
 
-    # Members can only download their own files or shared ones
+    # Members can only download their own files or shared files
     if role != 'admin' and file['owner_id'] != user_id and not file['is_shared']:
         return 'Access denied', 403
 
@@ -399,11 +399,11 @@ def preview(file_id):
     if file is None:
         return 'File not found', 404
 
-    # No preview for trashed files
+    # Do not preview trashed files
     if file['is_deleted']:
         return 'File not found', 404
 
-    # Preview follows the same access rule as download
+    # Preview uses the same access rule as download
     if role != 'admin' and file['owner_id'] != user_id and not file['is_shared']:
         return 'Access denied', 403
 
@@ -412,7 +412,7 @@ def preview(file_id):
     if not os.path.exists(file_path):
         return 'File not found on disk', 404
 
-    # Guess the mime type from the extension so the browser knows how to open it
+    # Guess the MIME type from the extension so the browser knows how to open it
 
     mime_type, _ = mimetypes.guess_type(file_path)
     if mime_type is None:
@@ -428,7 +428,7 @@ def preview(file_id):
 
 
 
-# Routes below change app data, so they stay POST
+# The routes below change app data, so they stay POST
 
 @app.route('/delete/<int:file_id>', methods=['POST'])
 @login_required
@@ -458,7 +458,7 @@ def share(file_id):
     if file is None:
         return redirect(url_for('home'))
 
-    # Do not allow sharing from the trash
+    # Do not allow sharing from trash
     if file['is_deleted']:
         return redirect(url_for('home'))
 
@@ -469,7 +469,7 @@ def share(file_id):
     return redirect(url_for('home'))
 
 
-# trash-related routes
+# Trash routes
 
 @app.route('/trash')
 @login_required
@@ -586,7 +586,7 @@ def rename(file_id):
     return 'ok', 200
 
 
-# admin routes
+# Admin routes
 
 @app.route('/admin/users')
 @admin_required

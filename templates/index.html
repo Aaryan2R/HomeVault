@@ -97,7 +97,7 @@
                 </select>
             </form>
 
-            {# list and grid toggle #}
+            {# list and grid view toggle #}
             <div class="view-toggle">
             <button class="view-btn" id="viewList" title="List view">&#9776;</button>
             <button class="view-btn" id="viewGrid" title="Grid view">&#9638;</button>
@@ -149,7 +149,7 @@
                  data-type="{{ file['file_type'] }}"
                  data-name="{{ file['original_name'] }}">
 
-                {# icon or thumbnail #}
+                {# thumbnail or simple file icon #}
                 <div class="file-icon {{ file['file_type']|lower }}">
                     {% if file['file_type'] == 'Photos' %}
                         <img src="/static/thumbnails/{{ file['id'] }}.jpg"

@@ -1,4 +1,4 @@
-{# Trash page for files that were deleted but not removed forever yet #}
+{# Trash page for files that are deleted but not gone forever yet #}
 {% extends "base.html" %}
 
 {% block title_suffix %} - Trash{% endblock %}
@@ -30,7 +30,7 @@
 
         {% for file in files %}
         <div class="file-row" style="opacity: 0.75;">
-            {# file icon or thumbnail #}
+            {# thumbnail or simple file icon #}
             <div class="file-icon {{ file['file_type']|lower }}">
                 {% if file['file_type'] == 'Photos' %}
                     <img src="/static/thumbnails/{{ file['id'] }}.jpg"

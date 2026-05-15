@@ -1,18 +1,9 @@
-/* ═══════════════════════════════════════════════════════════
-   HomeVault — Design System
-   A modern cloud storage dashboard with professional dark mode.
-
-   HOW THIS WORKS:
-   We use CSS "custom properties" (variables) like --bg-primary.
-   In light mode, --bg-primary is a light gray.
-   In dark mode, --bg-primary becomes a dark navy-blue.
-   Every element uses these variables, so switching themes
-   automatically updates the entire page — no need to write
-   separate styles for each mode.
-   ═══════════════════════════════════════════════════════════ */
+/* HomeVault styles
+   This file uses CSS variables for colors and spacing.
+   When the theme changes, the whole UI updates from these values. */
 
 
-/* ─── 1. Theme Variables ──────────────────────────────────── */
+/* 1. Theme variables */
 
 :root {
     /* Light theme colors */
@@ -47,7 +38,7 @@
     --right-panel-width: 280px;
 }
 
-/* Dark mode — activated when JS adds data-theme="dark" to <html> */
+/* Dark mode starts when JS adds data-theme="dark" to html */
 [data-theme="dark"] {
     --bg-primary:    #0f172a;
     --bg-card:       #1e293b;
@@ -77,7 +68,7 @@
 }
 
 
-/* ─── 2. Reset & Base ─────────────────────────────────────── */
+/* 2. Reset and base styles */
 
 * {
     margin: 0;
@@ -85,8 +76,8 @@
     box-sizing: border-box;
 }
 
-/* Import Inter font from Google — clean modern font used by many pro apps */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+/* Import Inter from Google Fonts */
+@import url('https://fonts.googleapis.com/css2-family=Inter:wght@300;400;500;600;700&display=swap');
 
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -102,7 +93,7 @@ a {
 }
 
 
-/* ─── 3. App Layout ───────────────────────────────────────── */
+/* 3. App layout */
 /* Desktop uses sidebar + content + right panel.
    On mobile the layout stacks and the sidebar becomes an overlay. */
 
@@ -112,7 +103,7 @@ a {
 }
 
 
-/* ─── 4. Sidebar ──────────────────────────────────────────── */
+/* 4. Sidebar */
 
 .sidebar {
     width: var(--sidebar-width);
@@ -196,7 +187,7 @@ a {
     text-transform: capitalize;
 }
 
-/* Sidebar links */
+/* 4. Sidebar */
 .sidebar-nav {
     flex: 1;
     padding: 16px 12px;
@@ -244,14 +235,14 @@ a {
     flex-shrink: 0;
 }
 
-/* Sidebar footer */
+/* 4. Sidebar */
 .sidebar-footer {
     padding: 16px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 
-/* ─── 5. Dark Mode Toggle ─────────────────────────────────── */
+/* 5. Dark mode toggle */
 
 .theme-toggle {
     display: flex;
@@ -270,7 +261,7 @@ a {
     gap: 10px;
 }
 
-/* The actual toggle switch — a styled checkbox */
+/* The real toggle is just a styled checkbox */
 .toggle-switch {
     position: relative;
     width: 44px;
@@ -317,7 +308,7 @@ a {
 }
 
 
-/* ─── 6. Main Content Area ────────────────────────────────── */
+/* 6. Main content */
 
 .main-content {
     flex: 1;
@@ -377,7 +368,7 @@ a {
 }
 
 
-/* ─── 7. View Tabs (My Files / Shared / All Files) ────────── */
+/* 7. View tabs */
 
 .view-tabs {
     display: flex;
@@ -411,7 +402,7 @@ a {
 }
 
 
-/* ─── 8. Category Cards ───────────────────────────────────── */
+/* 8. Category cards */
 
 .section-title {
     font-size: 16px;
@@ -479,7 +470,7 @@ a {
 }
 
 
-/* ─── 9. File List ────────────────────────────────────────── */
+/* 9. File list */
 
 .file-list {
     background: var(--bg-card);
@@ -523,7 +514,7 @@ a {
     text-decoration: underline;
 }
 
-/* File icon — small colored square with rounded corners */
+/* Small file icon box */
 .file-icon {
     width: 40px;
     height: 40px;
@@ -592,7 +583,7 @@ a {
 }
 
 
-/* ─── 10. Three-Dot Menu ──────────────────────────────────── */
+/* 10. Three-dot menu */
 /* Dropdown opened from the file action button */
 
 .menu-container {
@@ -685,7 +676,7 @@ a {
 }
 
 
-/* ─── 11. Right Panel ─────────────────────────────────────── */
+/* 11. Right panel */
 
 .right-panel {
     width: var(--right-panel-width);
@@ -852,7 +843,7 @@ a {
 }
 
 
-/* ─── 12. Buttons ─────────────────────────────────────────── */
+/* 12. Buttons */
 
 .btn {
     padding: 8px 18px;
@@ -904,7 +895,7 @@ a {
 }
 
 
-/* ─── 13. Empty State ─────────────────────────────────────── */
+/* 13. Empty state */
 
 .empty-state {
     text-align: center;
@@ -932,8 +923,8 @@ a {
 }
 
 
-/* ─── 14. Auth Pages (Login / Register) ───────────────────── */
-/* These pages don't have a sidebar — they're standalone centered cards */
+/* 14. Auth pages */
+/* Login and register use standalone centered cards */
 
 .auth-page {
     min-height: 100vh;
@@ -1105,7 +1096,7 @@ a {
 }
 
 
-/* ─── 15. Admin Tables ────────────────────────────────────── */
+/* 15. Admin tables */
 
 .admin-table {
     width: 100%;
@@ -1168,7 +1159,7 @@ a {
 }
 
 
-/* ─── 16. Mobile Hamburger Button ─────────────────────────── */
+/* 16. Mobile menu button */
 
 .mobile-header {
     display: none;
@@ -1218,7 +1209,7 @@ a {
 }
 
 
-/* ─── 17. Page Header ─────────────────────────────────────── */
+/* 17. Page header */
 
 .page-header {
     margin-bottom: 24px;
@@ -1243,7 +1234,7 @@ a {
 }
 
 
-/* ─── 18. Folder Filter Pills ─────────────────────────────── */
+/* 18. Folder filter pills */
 
 .filter-pills {
     display: flex;
@@ -1276,7 +1267,7 @@ a {
 }
 
 
-/* ─── 19. Responsive Design ───────────────────────────────── */
+/* 19. Responsive design */
 
 /* Leave room for the right panel on desktop */
 @media (min-width: 1025px) {
@@ -1285,7 +1276,7 @@ a {
     }
 }
 
-/* Tablet — hide right panel, stack it below */
+/* Tablet view: hide the right panel and move it below */
 @media (max-width: 1024px) {
     .right-panel {
         position: static;
@@ -1303,7 +1294,7 @@ a {
     }
 }
 
-/* Mobile — sidebar becomes overlay, everything single column */
+/* Mobile view: sidebar becomes an overlay and everything stacks */
 @media (max-width: 768px) {
     .mobile-header {
         display: flex;
@@ -1394,7 +1385,7 @@ a {
 }
 
 
-/* ─── 20. Utility & Animation ─────────────────────────────── */
+/* 20. Utility and animation */
 
 /* Smooth color changes when theme changes */
 .sidebar, .main-content, .right-panel, .file-list,
@@ -1428,9 +1419,9 @@ a {
     display: inline;
 }
 
-/* ─── Grid View ──────────────────────────────────────────── */
+/* Grid view */
 
-/* Buttons for list/grid view */
+/* 12. Buttons */
 .view-toggle {
     display: flex;
     gap: 4px;
@@ -1463,7 +1454,7 @@ a {
     color: white;
 }
 
-/* Grid layout — replaces the row layout */
+/* Grid layout replaces the normal row layout */
 .file-list.grid-view {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -1542,7 +1533,7 @@ a {
     color: var(--text-muted);
 }
 
-/* 3-dot button in grid view — top right corner of card */
+/* Three-dot button in the top right of the card */
 .file-list.grid-view .menu-container {
     position: absolute;
     top: 8px;
@@ -1679,7 +1670,7 @@ a {
     .admin-stats { grid-template-columns: 1fr; }
 }
 
-/* ─── Mobile Fix — Right Panel and Upload Zone ───────────── */
+/* 11. Right panel */
 @media (max-width: 768px) {
 
     /* Stack the entire layout vertically on mobile */

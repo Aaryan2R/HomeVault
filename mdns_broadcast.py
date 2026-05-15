@@ -4,7 +4,7 @@ from zeroconf import Zeroconf, ServiceInfo
 
 
 def get_local_ip():
-    # Quick way to get the current local IP.
+    # Small trick to get the main local IP we are using right now.
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         s.connect(('8.8.8.8', 80))
@@ -20,11 +20,11 @@ def start_mdns():
     ip = get_local_ip()
     ip_bytes = socket.inet_aton(ip)
 
-    # Advertise only on the main active IP.
+    # Only advertise on the active IP.
     # This helps avoid weird results from virtual adapters.
     zeroconf = Zeroconf(interfaces=[ip])
 
-    # Register HomeVault on the local network as an HTTP service.
+    # Register HomeVault on the local network as a normal HTTP service.
     info = ServiceInfo(
         type_='_http._tcp.local.',
         name='HomeVault._http._tcp.local.',
@@ -44,7 +44,7 @@ def start_mdns():
     except KeyboardInterrupt:
         pass
     finally:
-        # Remove the service cleanly when the script stops.
+        # Clean up the service properly when this script stops.
         zeroconf.unregister_service(info)
         zeroconf.close()
         print('mDNS broadcast stopped.')

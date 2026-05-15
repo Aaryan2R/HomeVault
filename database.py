@@ -13,7 +13,7 @@ def get_db():
 
 
 def get_order_clause(sort):
-    # Match the sort value from the URL to a safe SQL ORDER BY
+    # Convert the sort value from the URL into a safe ORDER BY.
     orders = {
         'date_desc': 'upload_date DESC',
         'date_asc':  'upload_date ASC',
@@ -29,7 +29,7 @@ def init_db():
     conn = get_db()
     cursor = conn.cursor()
 
-    # Files table
+    # Main files table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS files (
             id           INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -66,7 +66,7 @@ def upgrade_db():
     conn = get_db()
     cursor = conn.cursor()
 
-    # Try to add columns that older databases may not have yet
+    # Add any columns that older databases might still be missing.
     new_columns = [
         'ALTER TABLE files ADD COLUMN is_deleted INTEGER DEFAULT 0',
         'ALTER TABLE files ADD COLUMN deleted_at TEXT DEFAULT NULL',
@@ -78,23 +78,23 @@ def upgrade_db():
         try:
             cursor.execute(sql)
         except:
-            pass  # column probably already exists
+            pass  # This usually means the column already exists.
 
     conn.commit()
     conn.close()
 
 
-# user helpers
+# User helpers
 
 def create_user(username, password, role='member'):
     conn = get_db()
     cursor = conn.cursor()
 
-    # Check username first so we do not create duplicates
+    # Check the username first so we do not make duplicates.
     cursor.execute('SELECT id FROM users WHERE username = ?', (username,))
     if cursor.fetchone():
         conn.close()
-        return None  # username already taken
+        return None  # Username is already taken.
 
     hashed   = generate_password_hash(password)
     created  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -151,10 +151,10 @@ def get_all_users():
 def check_login(username, password):
     user = get_user_by_username(username)
     if user is None:
-        return None  # user not found
+        return None  # User not found.
     if check_password_hash(user['password'], password):
-        return user  # password matched
-    return None      # password did not match
+        return user  # Password matched.
+    return None      # Password did not match.
 
 
 def count_users():
@@ -166,7 +166,7 @@ def count_users():
     return count
 
 
-# file helpers
+# File helpers
 
 def save_file(filename, original_name, file_type, file_size, folder, upload_date, owner_id, is_shared=0):
     conn = get_db()
@@ -358,7 +358,7 @@ def toggle_shared(file_id):
         conn.close()
         return
 
-    # Flip shared on/off
+    # Flip the shared flag on or off.
     new_value = 1 if file['is_shared'] == 0 else 0
     cursor.execute('UPDATE files SET is_shared = ? WHERE id = ?', (new_value, file_id))
     conn.commit()
@@ -414,7 +414,7 @@ def get_admin_stats():
     }
 
 
-# storage summary helpers
+# Storage summary helpers
 
 def get_storage_stats(owner_id=None):
     """
@@ -425,7 +425,7 @@ def get_storage_stats(owner_id=None):
     conn = get_db()
     cursor = conn.cursor()
 
-    # The WHERE part changes when we want stats for one user only
+    # Change the WHERE part if we only want one user's stats.
     if owner_id:
         where = 'WHERE is_deleted = 0 AND owner_id = ?'
         params = (owner_id,)
@@ -433,7 +433,7 @@ def get_storage_stats(owner_id=None):
         where = 'WHERE is_deleted = 0'
         params = ()
 
-    # Get count and total size for each folder
+    # Get file count and total size for each folder.
     cursor.execute(f'''
         SELECT folder, COUNT(*) as count, COALESCE(SUM(file_size), 0) as size
         FROM files
@@ -444,7 +444,7 @@ def get_storage_stats(owner_id=None):
     rows = cursor.fetchall()
     conn.close()
 
-    # Build the final result dict
+    # Build the final result dictionary.
     categories = {}
     total_files = 0
     total_size = 0
@@ -457,7 +457,7 @@ def get_storage_stats(owner_id=None):
         total_files += row['count']
         total_size += row['size']
 
-    # Keep all 4 categories even when one is empty
+    # Keep all 4 categories even if one of them is empty.
     for cat in ['Photos', 'Videos', 'Documents', 'Others']:
         if cat not in categories:
             categories[cat] = {'count': 0, 'size': 0}
