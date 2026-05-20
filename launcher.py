@@ -44,8 +44,10 @@ def get_base():
 
 
 BASE = get_base()
-NGINX_EXE = 'C:\\nginx\\nginx.exe'
-WATCHER = 'C:\\nginx\\ip_watcher.py'
+_nginx_local = os.path.join(BASE, 'nginx', 'nginx.exe')
+_nginx_legacy = 'C:\\nginx\\nginx.exe'
+NGINX_EXE = _nginx_local if os.path.exists(_nginx_local) else _nginx_legacy
+WATCHER = os.path.join(BASE, 'ip_watcher.py')
 MDNS = os.path.join(BASE, 'mdns_broadcast.py')
 if getattr(sys, 'frozen', False):
     APP = os.path.join(BASE, '_internal', 'app.py')
@@ -271,7 +273,8 @@ def start_nginx(cb):
             pass
 
     cb('nginx', 'Starting...', None)
-    procs['nginx'] = popen_silent([NGINX_EXE], cwd='C:\\nginx')
+    nginx_dir = os.path.dirname(NGINX_EXE)
+    procs['nginx'] = popen_silent([NGINX_EXE], cwd=nginx_dir)
     time.sleep(2)
 
     if is_port_open(80):
@@ -286,7 +289,8 @@ def start_watcher(cb):
         return
 
     cb('watcher', 'Starting...', None)
-    procs['watcher'] = popen_silent([PYTHON, WATCHER], cwd='C:\\nginx')
+    watcher_dir = os.path.dirname(WATCHER)
+    procs['watcher'] = popen_silent([PYTHON, WATCHER], cwd=watcher_dir)
     time.sleep(1)
     cb('watcher', 'Running OK', True)
 

@@ -41,3 +41,8 @@ build/
 # Windows
 Thumbs.db
 desktop.ini
+
+installer_assets/*.exe
+installer_assets/*.msi
+installer_assets/*.zip
+installer_output/
