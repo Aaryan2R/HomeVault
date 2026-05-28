@@ -47,7 +47,13 @@ BASE = get_base()
 _nginx_local = os.path.join(BASE, 'nginx', 'nginx.exe')
 _nginx_legacy = 'C:\\nginx\\nginx.exe'
 NGINX_EXE = _nginx_local if os.path.exists(_nginx_local) else _nginx_legacy
-WATCHER = os.path.join(BASE, 'ip_watcher.py')
+NGINX_DIR = os.path.dirname(NGINX_EXE)
+NGINX_LOGS = os.path.join(NGINX_DIR, 'logs')
+NGINX_PID = os.path.join(NGINX_LOGS, 'nginx.pid')
+NGINX_ERROR_LOG = os.path.join(NGINX_LOGS, 'error.log')
+_watcher_local = os.path.join(BASE, 'ip_watcher.py')
+_watcher_internal = os.path.join(BASE, '_internal', 'ip_watcher.py')
+WATCHER = _watcher_local if os.path.exists(_watcher_local) else _watcher_internal
 MDNS = os.path.join(BASE, 'mdns_broadcast.py')
 if getattr(sys, 'frozen', False):
     APP = os.path.join(BASE, '_internal', 'app.py')
@@ -121,11 +127,10 @@ def is_port_open(port):
 
 
 def fix_nginx_permissions():
-    logs_dir = 'C:\\nginx\\logs'
-    if not os.path.exists(logs_dir):
+    if not os.path.exists(NGINX_LOGS):
         return
     try:
-        run_silent(['icacls', logs_dir, '/grant', '*S-1-1-0:(OI)(CI)F', '/T'])
+        run_silent(['icacls', NGINX_LOGS, '/grant', '*S-1-1-0:(OI)(CI)F', '/T'])
     except Exception:
         pass
 
@@ -147,8 +152,7 @@ def ensure_hosts_entry():
 
 
 def get_best_url():
-    nginx_pid = 'C:\\nginx\\logs\\nginx.pid'
-    if os.path.exists(nginx_pid):
+    if is_port_open(80):
         return 'http://homevault.local'
     return 'http://127.0.0.1:5000'
 
@@ -248,12 +252,11 @@ def start_nginx(cb):
         return
 
     fix_nginx_permissions()
-    pid_file = 'C:\\nginx\\logs\\nginx.pid'
     nginx_running = False
 
-    if os.path.exists(pid_file):
+    if os.path.exists(NGINX_PID):
         try:
-            with open(pid_file, 'r', encoding='utf-8') as f:
+            with open(NGINX_PID, 'r', encoding='utf-8') as f:
                 pid = int(f.read().strip())
             import psutil
             if psutil.pid_exists(pid):
@@ -266,21 +269,20 @@ def start_nginx(cb):
         cb('nginx', 'Running OK', True)
         return
 
-    if os.path.exists(pid_file):
+    if os.path.exists(NGINX_PID):
         try:
-            os.remove(pid_file)
+            os.remove(NGINX_PID)
         except OSError:
             pass
 
     cb('nginx', 'Starting...', None)
-    nginx_dir = os.path.dirname(NGINX_EXE)
-    procs['nginx'] = popen_silent([NGINX_EXE], cwd=nginx_dir)
+    procs['nginx'] = popen_silent([NGINX_EXE], cwd=NGINX_DIR)
     time.sleep(2)
 
     if is_port_open(80):
         cb('nginx', 'Running OK', True)
     else:
-        cb('nginx', 'Failed - check C:\\nginx\\logs\\error.log', False)
+        cb('nginx', f'Failed - check {NGINX_ERROR_LOG}', False)
 
 
 def start_watcher(cb):
@@ -370,10 +372,9 @@ def stop_all():
         pass
 
     # Remove the old pid file so the next start is clean.
-    pid_file = 'C:\\nginx\\logs\\nginx.pid'
-    if os.path.exists(pid_file):
+    if os.path.exists(NGINX_PID):
         try:
-            os.remove(pid_file)
+            os.remove(NGINX_PID)
         except OSError:
             pass
 
@@ -457,7 +458,7 @@ class LauncherApp:
         ).pack(side='left', padx=20, pady=16)
         tk.Label(
             hdr,
-            text='v1.1',
+            text='v1.2',
             bg=self.BLUE,
             fg='#93c5fd',
             font=('Segoe UI', 10)
