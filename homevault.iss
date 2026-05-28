@@ -74,22 +74,28 @@ Name: "{autodesktop}\HomeVault"; Filename: "{app}\{#AppExeName}"; Tasks: desktop
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "HomeVault"; ValueData: """{app}\{#AppExeName}"""; Flags: uninsdeletevalue; Tasks: startupentry
 
 [Run]
-; Run setup_helper.py after files are copied
-; This handles Python, venv, Nginx, Bonjour, .env, firewall
-Filename: "{app}\venv\Scripts\python.exe"; \
+; Install a small local Python runtime only for setup_helper.py.
+Filename: "{app}\installer_assets\python-installer.exe"; \
+  Parameters: "/quiet InstallAllUsers=0 PrependPath=0 Include_test=0 TargetDir=""{tmp}\HomeVaultPython"""; \
+  StatusMsg: "Installing setup runtime..."; \
+  Flags: runhidden waituntilterminated; \
+  Check: not SetupPythonExists
+
+; Run setup helper through the local runtime.
+Filename: "{tmp}\HomeVaultPython\python.exe"; \
   Parameters: """{app}\setup_helper.py"" --install-dir ""{app}"""; \
   WorkingDir: "{app}"; \
-  Flags: runhidden waituntilterminated; \
   StatusMsg: "Configuring HomeVault..."; \
-  Check: VenvExists
+  Flags: runhidden waituntilterminated; \
+  Check: SetupPythonExists
 
-; If venv doesn't exist yet use system Python
+; Last fallback for developer machines if the local runtime is not available.
 Filename: "python"; \
   Parameters: """{app}\setup_helper.py"" --install-dir ""{app}"""; \
   WorkingDir: "{app}"; \
-  Flags: runhidden waituntilterminated; \
   StatusMsg: "Setting up HomeVault..."; \
-  Check: not VenvExists
+  Flags: runhidden waituntilterminated; \
+  Check: not SetupPythonExists
 
 ; Launch HomeVault after install if user wants
 Filename: "{app}\{#AppExeName}"; \
@@ -98,8 +104,8 @@ Filename: "{app}\{#AppExeName}"; \
 
 [UninstallRun]
 ; Stop HomeVault before uninstalling
-Filename: "taskkill"; Parameters: "/F /IM HomeVault.exe"; Flags: runhidden
-Filename: "taskkill"; Parameters: "/F /IM nginx.exe"; Flags: runhidden
+Filename: "taskkill"; Parameters: "/F /IM HomeVault.exe"; Flags: runhidden; RunOnceId: "KillHomeVault"
+Filename: "taskkill"; Parameters: "/F /IM nginx.exe"; Flags: runhidden; RunOnceId: "KillNginx"
 
 [UninstallDelete]
 ; Clean up generated files on uninstall
@@ -113,9 +119,9 @@ Type: filesandordirs; Name: "{app}\static\thumbnails"
 Type: filesandordirs; Name: "{app}\venv"
 
 [Code]
-function VenvExists(): Boolean;
+function SetupPythonExists(): Boolean;
 begin
-  Result := FileExists(ExpandConstant('{app}\venv\Scripts\python.exe'));
+  Result := FileExists(ExpandConstant('{tmp}\HomeVaultPython\python.exe'));
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);

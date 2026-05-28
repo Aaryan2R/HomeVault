@@ -4,10 +4,9 @@ import os
 import socket
 import secrets
 import winreg
-import tempfile
 import shutil
 
-# ── Paths ─────────────────────────────────────────────────────
+# Basic paths used by the installer helper
 # These are passed by Inno Setup as command line arguments
 # so the script knows where HomeVault was installed
 # Usage: python setup_helper.py --install-dir "C:\Program Files\HomeVault"
@@ -16,7 +15,7 @@ def get_install_dir():
     for i, arg in enumerate(sys.argv):
         if arg == '--install-dir' and i + 1 < len(sys.argv):
             return sys.argv[i + 1]
-    # Fallback — use script's own directory
+    # Fallback - use script's own directory
     return os.path.dirname(os.path.abspath(__file__))
 
 INSTALL_DIR  = get_install_dir()
@@ -33,7 +32,7 @@ ASSETS_DIR   = os.path.join(INSTALL_DIR, 'installer_assets')
 LOG_FILE     = os.path.join(INSTALL_DIR, 'setup.log')
 
 
-# ── Logging ───────────────────────────────────────────────────
+# Simple file + console logging
 def log(msg):
     print(msg)
     try:
@@ -44,7 +43,7 @@ def log(msg):
         pass
 
 
-# ── Silent subprocess ─────────────────────────────────────────
+# Run setup commands without flashing cmd windows
 def run_silent(cmd, **kwargs):
     si = subprocess.STARTUPINFO()
     si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
@@ -59,7 +58,7 @@ def run_silent(cmd, **kwargs):
     )
 
 
-# ── Step 1: Check Python ──────────────────────────────────────
+# Check whether Python is available
 def check_python():
     log('Checking Python...')
 
@@ -75,10 +74,10 @@ def check_python():
         minor = int(parts[1])
 
         if major == 3 and minor >= 10:
-            log('Python 3.10+ found — skipping install')
+            log('Python 3.10+ found - skipping install')
             return True
         else:
-            log(f'Python {major}.{minor} is too old — need 3.10+')
+            log(f'Python {major}.{minor} is too old - need 3.10+')
             return False
 
     except Exception as e:
@@ -117,12 +116,12 @@ def install_python():
         return False
 
 
-# ── Step 2: Create isolated venv ─────────────────────────────
+# Optional Python install helper, kept for manual repair cases
 def create_venv():
     log('Creating virtual environment...')
 
     if os.path.exists(VENV_PY):
-        log('venv already exists — skipping')
+        log('venv already exists - skipping')
         return True
 
     # Find Python executable
@@ -141,7 +140,7 @@ def create_venv():
         return False
 
 
-# ── Step 3: Install requirements ─────────────────────────────
+# Create a venv if a manual install ever needs one
 def install_requirements():
     log('Installing Python packages...')
 
@@ -166,13 +165,13 @@ def install_requirements():
         return False
 
 
-# ── Step 4: Check and setup Nginx ────────────────────────────
+# Install Python packages for manual source installs
 def check_nginx():
     log('Checking Nginx...')
 
     # Check if Nginx already exists at install location
     if os.path.exists(NGINX_EXE):
-        log('Nginx already present — skipping extract')
+        log('Nginx already present - skipping extract')
         fix_nginx_permissions()
         write_nginx_config()
         return True
@@ -180,7 +179,7 @@ def check_nginx():
     # Check legacy C:\nginx location
     legacy_nginx = 'C:\\nginx\\nginx.exe'
     if os.path.exists(legacy_nginx):
-        log('Nginx found at C:\\nginx — using existing installation')
+        log('Nginx found at C:\\nginx - using existing installation')
         fix_nginx_permissions()
         return True
 
@@ -190,7 +189,7 @@ def check_nginx():
 
     if not os.path.exists(nginx_zip):
         log('WARNING: nginx.zip not found in installer_assets')
-        log('Nginx will not be available — direct IP access still works')
+        log('Nginx will not be available - direct IP access still works')
         return False
 
     import zipfile
@@ -283,50 +282,52 @@ http {{
         log(f'Could not write nginx.conf: {e}')
 
 
-# ── Step 5: Check and install Bonjour ────────────────────────
+# Prepare Nginx for local network access
 def check_bonjour():
     log('Checking Bonjour...')
 
-    # Check if Bonjour service already exists
     try:
         result = run_silent(['sc', 'query', 'Bonjour Service'])
         if 'RUNNING' in result.stdout or 'STOPPED' in result.stdout:
-            log('Bonjour already installed — skipping')
+            log('Bonjour already installed - skipping')
             return True
-    except:
+    except Exception:
         pass
 
-    # Install bundled Bonjour
     log('Installing Bonjour...')
     bonjour_msi = os.path.join(ASSETS_DIR, 'Bonjour64.msi')
+    bonjour_exe = os.path.join(ASSETS_DIR, 'Bonjour64.exe')
+    bonjour_installer = bonjour_msi if os.path.exists(bonjour_msi) else bonjour_exe
 
-    if not os.path.exists(bonjour_msi):
-        log('WARNING: Bonjour64.msi not found in installer_assets')
+    if not os.path.exists(bonjour_installer):
+        log('WARNING: Bonjour installer not found in installer_assets')
         log('homevault.local may not work on other devices')
         return False
 
-    # msiexec /quiet = silent install, /norestart = no reboot prompt
-    result = run_silent([
-        'msiexec', '/i', bonjour_msi,
-        '/quiet', '/norestart'
-    ])
+    if bonjour_installer.lower().endswith('.msi'):
+        result = run_silent([
+            'msiexec', '/i', bonjour_installer,
+            '/quiet', '/norestart'
+        ])
+    else:
+        result = run_silent([
+            bonjour_installer,
+            '/quiet', '/norestart'
+        ])
 
     if result.returncode == 0:
         log('Bonjour installed successfully')
         return True
-    else:
-        log(f'Bonjour install returned: {result.returncode}')
-        # Return True anyway — Bonjour sometimes returns non-zero
-        # even on successful install
-        return True
 
+    log(f'Bonjour install returned: {result.returncode}')
+    return True
 
-# ── Step 6: Generate .env file ────────────────────────────────
+# Check or install Bonjour for .local names
 def create_env_file():
     log('Creating .env file...')
 
     if os.path.exists(ENV_FILE):
-        log('.env already exists — keeping existing secret key')
+        log('.env already exists - keeping existing secret key')
         return True
 
     try:
@@ -341,7 +342,7 @@ def create_env_file():
         return False
 
 
-# ── Step 7: Firewall rules ────────────────────────────────────
+# Create the local secret config file
 def setup_firewall():
     log('Setting firewall rules...')
 
@@ -370,7 +371,7 @@ def setup_firewall():
     log('Firewall rules set')
 
 
-# ── Step 8: Update hosts file ─────────────────────────────────
+# Add firewall rules for HomeVault
 def update_hosts():
     log('Updating hosts file...')
     hosts = r'C:\Windows\System32\drivers\etc\hosts'
@@ -389,7 +390,7 @@ def update_hosts():
         log(f'Hosts file update failed: {e}')
 
 
-# ── Step 9: Copy ip_watcher to nginx folder ───────────────────
+# Add homevault.local to the hosts file
 def setup_ip_watcher():
     log('Setting up IP watcher...')
     src = os.path.join(INSTALL_DIR, 'ip_watcher.py')
@@ -405,27 +406,20 @@ def setup_ip_watcher():
             shutil.copy2(src, dst)
             log('ip_watcher.py also copied to C:\\nginx')
         except Exception as e:
-            log(f'Could not copy to C:\\nginx: {e}')
+            log(f'Legacy C:\\nginx copy skipped: {e}')
 
     log('IP watcher ready')
 
 
-# ── Main ──────────────────────────────────────────────────────
+# Keep the IP watcher available for legacy Nginx installs
 def main():
     log('-' * 50)
-    log(f'HomeVault Setup Helper')
+    log('HomeVault Setup Helper')
     log(f'Install directory: {INSTALL_DIR}')
     log('-' * 50)
 
-    # Run all setup steps in order
-    python_ok = check_python()
-    if not python_ok:
-        python_ok = install_python()
-
-    if python_ok:
-        create_venv()
-        install_requirements()
-
+    # HomeVault.exe is already bundled, so setup only prepares Windows services.
+    check_python()
     check_nginx()
     check_bonjour()
     create_env_file()
@@ -437,7 +431,6 @@ def main():
     log('Setup complete')
     log('-' * 50)
     return 0
-
 
 if __name__ == '__main__':
     sys.exit(main())
