@@ -10,8 +10,7 @@ import winreg
 import tempfile
 
 
-# Small helper so Windows commands stay hidden.
-# This stops random cmd windows from flashing for the user.
+# Run Windows commands quietly so random cmd windows do not pop up.
 def run_silent(cmd, **kwargs):
     si = subprocess.STARTUPINFO()
     si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
@@ -201,7 +200,7 @@ def start_flask(cb):
     cb('flask', 'Starting...', None)
 
     if getattr(sys, 'frozen', False):
-        # In the built exe, Flask runs inside this same process.
+        # In the built exe, app.py runs inside this launcher process.
         def run_flask_thread():
             try:
                 os.environ['HOMEVAULT_BASE'] = BASE
@@ -332,7 +331,7 @@ def start_mdns(cb):
 
 
 def stop_all():
-    # First stop the extra processes this launcher started.
+    # Stop the extra processes this launcher started.
     for name, proc in list(procs.items()):
         if proc and proc.poll() is None:
             try:
@@ -341,16 +340,16 @@ def stop_all():
                 pass
             procs[name] = None
 
-    # Ask Nginx to stop nicely first.
+    # Ask Nginx to stop normally first.
     if os.path.exists(NGINX_EXE):
         run_silent([NGINX_EXE, '-s', 'stop'])
         time.sleep(1)
 
-    # Then force-kill every nginx.exe in case workers are still hanging around.
+    # Nginx can leave worker processes behind on Windows, so clean them too.
     run_silent(['taskkill', '/F', '/IM', 'nginx.exe'])
     time.sleep(0.3)
 
-    # Clean up Flask if something is still listening on 5000.
+    # If Flask is still holding port 5000, kill that process.
     try:
         result = run_silent(['netstat', '-ano'], text=True)
         for line in result.stdout.splitlines():
@@ -360,7 +359,7 @@ def stop_all():
     except Exception:
         pass
 
-    # Double-check port 80 and kill anything left there.
+    # Port 80 should be free after stopping Nginx.
     try:
         result = run_silent(['netstat', '-ano'], text=True)
         for line in result.stdout.splitlines():
@@ -371,7 +370,7 @@ def stop_all():
     except Exception:
         pass
 
-    # Remove the old pid file so the next start is clean.
+    # Remove stale pid file so the next launch starts cleanly.
     if os.path.exists(NGINX_PID):
         try:
             os.remove(NGINX_PID)
@@ -393,7 +392,7 @@ def create_tray_icon(on_open, on_show, on_toggle_start, on_exit):
     img = PIL.Image.new('RGBA', (64, 64), (255, 255, 255, 0))
     draw = PIL.ImageDraw.Draw(img)
     try:
-        # Use the same house emoji look as the browser tab icon.
+        # Keep the tray icon matching the browser tab icon.
         house = '\U0001F3E0'
         font = PIL.ImageFont.truetype('seguiemj.ttf', 48)
         bbox = draw.textbbox((0, 0), house, font=font, embedded_color=True)

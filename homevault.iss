@@ -1,5 +1,5 @@
-; HomeVault Inno Setup Script
-; Builds HomeVault_Setup.exe
+; HomeVault installer script
+; Compile this to create HomeVault_Setup.exe
 
 #define AppName "HomeVault"
 #define AppVersion "1.2.0"
@@ -41,20 +41,20 @@ Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription:
 Name: "startupentry"; Description: "Start HomeVault automatically with Windows"; GroupDescription: "Startup:"; Flags: unchecked
 
 [Files]
-; Main application files
+; Built launcher folder from PyInstaller
 Source: "dist\HomeVault\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
-; Setup helper script
+; Python helper used during install
 Source: "setup_helper.py"; DestDir: "{app}"; Flags: ignoreversion
 
-; Nginx config and ip_watcher
+; IP watcher is kept in the app folder too
 Source: "ip_watcher.py"; DestDir: "{app}"; Flags: ignoreversion
 
-; Installer assets (Python, Bonjour, Nginx)
+; Local installer files for Python, Bonjour, and Nginx
 Source: "installer_assets\*"; DestDir: "{app}\installer_assets"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Dirs]
-; Create storage folders
+; Make the folders the app expects
 Name: "{app}\storage\Photos"
 Name: "{app}\storage\Videos"
 Name: "{app}\storage\Documents"
@@ -62,26 +62,26 @@ Name: "{app}\storage\Others"
 Name: "{app}\static\thumbnails"
 
 [Icons]
-; Start Menu
+; Start Menu shortcuts
 Name: "{group}\HomeVault"; Filename: "{app}\{#AppExeName}"
 Name: "{group}\Uninstall HomeVault"; Filename: "{uninstallexe}"
 
-; Desktop shortcut
+; Optional desktop shortcut
 Name: "{autodesktop}\HomeVault"; Filename: "{app}\{#AppExeName}"; Tasks: desktopicon
 
 [Registry]
-; Autostart with Windows — only if user chose this task
+; Start with Windows only if the user selects it
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "HomeVault"; ValueData: """{app}\{#AppExeName}"""; Flags: uninsdeletevalue; Tasks: startupentry
 
 [Run]
-; Install a small local Python runtime only for setup_helper.py.
+; Install a temporary Python runtime for setup_helper.py.
 Filename: "{app}\installer_assets\python-installer.exe"; \
   Parameters: "/quiet InstallAllUsers=0 PrependPath=0 Include_test=0 TargetDir=""{tmp}\HomeVaultPython"""; \
   StatusMsg: "Installing setup runtime..."; \
   Flags: runhidden waituntilterminated; \
   Check: not SetupPythonExists
 
-; Run setup helper through the local runtime.
+; Run setup helper with that temporary runtime.
 Filename: "{tmp}\HomeVaultPython\python.exe"; \
   Parameters: """{app}\setup_helper.py"" --install-dir ""{app}"""; \
   WorkingDir: "{app}"; \
@@ -89,7 +89,7 @@ Filename: "{tmp}\HomeVaultPython\python.exe"; \
   Flags: runhidden waituntilterminated; \
   Check: SetupPythonExists
 
-; Last fallback for developer machines if the local runtime is not available.
+; Fallback for developer machines where Python already works.
 Filename: "python"; \
   Parameters: """{app}\setup_helper.py"" --install-dir ""{app}"""; \
   WorkingDir: "{app}"; \
@@ -97,18 +97,18 @@ Filename: "python"; \
   Flags: runhidden waituntilterminated; \
   Check: not SetupPythonExists
 
-; Launch HomeVault after install if user wants
+; Optional launch after setup finishes
 Filename: "{app}\{#AppExeName}"; \
   Description: "Launch HomeVault now"; \
   Flags: nowait postinstall skipifsilent
 
 [UninstallRun]
-; Stop HomeVault before uninstalling
+; Stop running app processes before uninstall
 Filename: "taskkill"; Parameters: "/F /IM HomeVault.exe"; Flags: runhidden; RunOnceId: "KillHomeVault"
 Filename: "taskkill"; Parameters: "/F /IM nginx.exe"; Flags: runhidden; RunOnceId: "KillNginx"
 
 [UninstallDelete]
-; Clean up generated files on uninstall
+; Remove files created after installation
 Type: files; Name: "{app}\.env"
 Type: files; Name: "{app}\homevault.db"
 Type: files; Name: "{app}\setup.log"
@@ -130,7 +130,7 @@ var
 begin
   if CurUninstallStep = usPostUninstall then
   begin
-    // Remove firewall rules on uninstall
+    // Remove HomeVault firewall rules on uninstall
     Exec('netsh', 'advfirewall firewall delete rule name="HomeVault"',
          '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
     Exec('netsh', 'advfirewall firewall delete rule name="HomeVault-Flask"',

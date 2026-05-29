@@ -3,7 +3,7 @@ from PIL import Image
 
 THUMBNAIL_SIZE = (200, 200)
 
-# Keep this path inside the project so thumbnails always go to the right place
+# Thumbnails stay inside the project folder.
 BASE_DIR         = os.path.dirname(os.path.abspath(__file__))
 THUMBNAIL_FOLDER = os.path.join(BASE_DIR, 'static', 'thumbnails')
 

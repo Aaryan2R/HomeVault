@@ -6,9 +6,7 @@ import secrets
 import winreg
 import shutil
 
-# Basic paths used by the installer helper
-# These are passed by Inno Setup as command line arguments
-# so the script knows where HomeVault was installed
+# Paths passed by Inno Setup so this script knows where HomeVault is installed.
 # Usage: python setup_helper.py --install-dir "C:\Program Files\HomeVault"
 
 def get_install_dir():
@@ -32,7 +30,7 @@ ASSETS_DIR   = os.path.join(INSTALL_DIR, 'installer_assets')
 LOG_FILE     = os.path.join(INSTALL_DIR, 'setup.log')
 
 
-# Simple file + console logging
+# Print messages and also keep a setup.log file.
 def log(msg):
     print(msg)
     try:
@@ -43,7 +41,7 @@ def log(msg):
         pass
 
 
-# Run setup commands without flashing cmd windows
+# Run setup commands quietly in the background.
 def run_silent(cmd, **kwargs):
     si = subprocess.STARTUPINFO()
     si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
@@ -58,17 +56,17 @@ def run_silent(cmd, **kwargs):
     )
 
 
-# Check whether Python is available
+# Check if Python is already available.
 def check_python():
     log('Checking Python...')
 
-    # Check if Python 3.10+ is available
+    # HomeVault setup needs Python 3.10 or newer when run from source.
     try:
         result = run_silent(['python', '--version'])
         version_str = result.stdout.strip() or result.stderr.strip()
         log(f'Found: {version_str}')
 
-        # Parse version number
+        # Pull out major/minor version numbers.
         parts = version_str.replace('Python ', '').split('.')
         major = int(parts[0])
         minor = int(parts[1])
@@ -85,6 +83,7 @@ def check_python():
         return False
 
 
+# Kept as a backup for manual installer repair work.
 def install_python():
     log('Installing Python...')
     python_installer = os.path.join(
@@ -95,11 +94,7 @@ def install_python():
         log('ERROR: python-installer.exe not found in installer_assets')
         return False
 
-    # Install Python silently for all users
-    # /quiet = no UI
-    # InstallAllUsers=1 = available to all users on PC
-    # PrependPath=1 = adds Python to PATH
-    # Include_test=0 = skip test suite to save space
+    # Silent install options used by the repair/manual path.
     result = run_silent([
         python_installer,
         '/quiet',
@@ -116,7 +111,7 @@ def install_python():
         return False
 
 
-# Optional Python install helper, kept for manual repair cases
+# Create a venv if a manual install ever needs one.
 def create_venv():
     log('Creating virtual environment...')
 
@@ -124,7 +119,7 @@ def create_venv():
         log('venv already exists - skipping')
         return True
 
-    # Find Python executable
+    # Use whichever Python command Windows can find.
     python_exe = shutil.which('python') or shutil.which('python3')
     if not python_exe:
         log('ERROR: Python not found in PATH after install')
@@ -140,7 +135,7 @@ def create_venv():
         return False
 
 
-# Create a venv if a manual install ever needs one
+# Install packages into the venv for manual source installs.
 def install_requirements():
     log('Installing Python packages...')
 
@@ -165,25 +160,25 @@ def install_requirements():
         return False
 
 
-# Install Python packages for manual source installs
+# Prepare Nginx for local network access.
 def check_nginx():
     log('Checking Nginx...')
 
-    # Check if Nginx already exists at install location
+    # Prefer the Nginx copy inside the install folder.
     if os.path.exists(NGINX_EXE):
         log('Nginx already present - skipping extract')
         fix_nginx_permissions()
         write_nginx_config()
         return True
 
-    # Check legacy C:\nginx location
+    # Also support the older C:\nginx setup.
     legacy_nginx = 'C:\\nginx\\nginx.exe'
     if os.path.exists(legacy_nginx):
         log('Nginx found at C:\\nginx - using existing installation')
         fix_nginx_permissions()
         return True
 
-    # Extract bundled Nginx
+    # Otherwise extract the bundled Nginx zip.
     log('Extracting Nginx...')
     nginx_zip = os.path.join(ASSETS_DIR, 'nginx.zip')
 
@@ -197,8 +192,7 @@ def check_nginx():
         with zipfile.ZipFile(nginx_zip, 'r') as z:
             z.extractall(INSTALL_DIR)
 
-        # Nginx zip extracts as nginx-1.30.0\ folder
-        # Rename it to just nginx\
+        # Nginx zip extracts with a versioned folder name, so rename it.
         for item in os.listdir(INSTALL_DIR):
             if item.startswith('nginx-') and os.path.isdir(
                     os.path.join(INSTALL_DIR, item)):
@@ -219,7 +213,7 @@ def check_nginx():
 
 
 def fix_nginx_permissions():
-    # Fix log folder permissions so Nginx works without admin
+    # Let Nginx write logs without needing admin every launch.
     logs = NGINX_LOGS if os.path.exists(NGINX_LOGS) \
            else 'C:\\nginx\\logs'
     if os.path.exists(logs):
@@ -242,7 +236,7 @@ def get_local_ip():
 
 
 def write_nginx_config():
-    # Write a fresh nginx.conf pointing to install location
+    # Write nginx.conf for the current local IP.
     conf_dir = os.path.join(NGINX_TARGET, 'conf')
     if not os.path.exists(conf_dir):
         conf_dir = 'C:\\nginx\\conf'
@@ -282,7 +276,7 @@ http {{
         log(f'Could not write nginx.conf: {e}')
 
 
-# Prepare Nginx for local network access
+# Check or install Bonjour for homevault.local.
 def check_bonjour():
     log('Checking Bonjour...')
 
@@ -322,7 +316,7 @@ def check_bonjour():
     log(f'Bonjour install returned: {result.returncode}')
     return True
 
-# Check or install Bonjour for .local names
+# Create the local .env file if it does not exist.
 def create_env_file():
     log('Creating .env file...')
 
@@ -342,23 +336,23 @@ def create_env_file():
         return False
 
 
-# Create the local secret config file
+# Add firewall rules for the app and its ports.
 def setup_firewall():
     log('Setting firewall rules...')
 
     exe_path = os.path.join(INSTALL_DIR, 'HomeVault.exe')
 
     rules = [
-        # Allow HomeVault exe
+        # Allow the launcher exe.
         ['netsh', 'advfirewall', 'firewall', 'add', 'rule',
          f'name=HomeVault', 'dir=in', 'action=allow',
          f'program={exe_path}', 'enable=yes', 'profile=private'],
-        # Allow Flask port
+        # Allow Flask direct access.
         ['netsh', 'advfirewall', 'firewall', 'add', 'rule',
          'name=HomeVault-Flask', 'dir=in', 'action=allow',
          'protocol=TCP', 'localport=5000',
          'enable=yes', 'profile=private'],
-        # Allow Nginx port
+        # Allow clean URL access through Nginx.
         ['netsh', 'advfirewall', 'firewall', 'add', 'rule',
          'name=HomeVault-Nginx', 'dir=in', 'action=allow',
          'protocol=TCP', 'localport=80',
@@ -371,7 +365,7 @@ def setup_firewall():
     log('Firewall rules set')
 
 
-# Add firewall rules for HomeVault
+# Add homevault.local to the hosts file on this PC.
 def update_hosts():
     log('Updating hosts file...')
     hosts = r'C:\Windows\System32\drivers\etc\hosts'
@@ -390,7 +384,7 @@ def update_hosts():
         log(f'Hosts file update failed: {e}')
 
 
-# Add homevault.local to the hosts file
+# Keep ip_watcher available for legacy C:\nginx installs.
 def setup_ip_watcher():
     log('Setting up IP watcher...')
     src = os.path.join(INSTALL_DIR, 'ip_watcher.py')
@@ -411,14 +405,14 @@ def setup_ip_watcher():
     log('IP watcher ready')
 
 
-# Keep the IP watcher available for legacy Nginx installs
+# Main setup flow used by the installer.
 def main():
     log('-' * 50)
     log('HomeVault Setup Helper')
     log(f'Install directory: {INSTALL_DIR}')
     log('-' * 50)
 
-    # HomeVault.exe is already bundled, so setup only prepares Windows services.
+    # HomeVault.exe is already bundled, so this only prepares Windows services.
     check_python()
     check_nginx()
     check_bonjour()
