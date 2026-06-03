@@ -185,6 +185,19 @@ Download from https://support.apple.com/kb/DL999 and install.
 
 ---
 
+## Testing
+
+This project uses `pytest` to ensure code stability. To run the full test suite and verify the application logic, use the following commands:
+
+```powershell
+# Activate your virtual environment
+.\venv\Scripts\Activate.ps1
+
+# Run all tests
+pytest
+
+---
+
 ## First Time Setup
 
 Go to `/register` — the first account is automatically set as Admin.
