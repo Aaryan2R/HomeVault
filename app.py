@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, send_file, session
+from flask import Flask, render_template, request, redirect, url_for, send_file, session, abort
 from database import (init_db, upgrade_db, save_file, get_all_files, get_file_by_id,
                       delete_file, trash_file, get_trashed_files, restore_file,
                       search_files, get_files_by_folder, get_files_by_owner,
@@ -161,7 +161,7 @@ def admin_required(f):
         if 'user_id' not in session:
             return redirect(url_for('login'))
         if session.get('role') != 'admin':
-            return 'Access denied', 403
+            return abort(403)
         return f(*args, **kwargs)
     return decorated
 
@@ -369,20 +369,20 @@ def download(file_id):
     role    = session['role']
 
     if file is None:
-        return 'File not found', 404
+        return abort(404)
 
     # Do not open files that are in trash
     if file['is_deleted']:
-        return 'File not found', 404
+        return abort(404)
 
     # Members can only download their own files or shared files
     if role != 'admin' and file['owner_id'] != user_id and not file['is_shared']:
-        return 'Access denied', 403
+        return abort(403)
 
     file_path = os.path.join(BASE_DIR, 'storage', file['folder'], file['filename'])
 
     if not os.path.exists(file_path):
-        return 'File not found on disk', 404
+        return abort(404)
 
     return send_file(file_path, download_name=file['original_name'], as_attachment=True)
 
@@ -397,20 +397,20 @@ def preview(file_id):
     role    = session['role']
 
     if file is None:
-        return 'File not found', 404
+        return abort(404)
 
     # Do not preview trashed files
     if file['is_deleted']:
-        return 'File not found', 404
+        return abort(404)
 
     # Preview uses the same access rule as download
     if role != 'admin' and file['owner_id'] != user_id and not file['is_shared']:
-        return 'Access denied', 403
+        return abort(403)
 
     file_path = os.path.join(BASE_DIR, 'storage', file['folder'], file['filename'])
 
     if not os.path.exists(file_path):
-        return 'File not found on disk', 404
+        return abort(404)
 
     # Guess the MIME type from the extension so the browser knows how to open it
 
@@ -442,7 +442,7 @@ def delete(file_id):
 
     # Members should only delete their own files
     if role != 'admin' and file['owner_id'] != user_id:
-        return 'Access denied', 403
+        return abort(403)
 
     trash_file(file_id)
     return redirect(url_for('home'))
@@ -463,7 +463,7 @@ def share(file_id):
         return redirect(url_for('home'))
 
     if role != 'admin' and file['owner_id'] != user_id:
-        return 'Access denied', 403
+        return abort(403)
 
     toggle_shared(file_id)
     return redirect(url_for('home'))
@@ -528,7 +528,7 @@ def restore(file_id):
         return redirect(url_for('trash'))
 
     if role != 'admin' and file['owner_id'] != user_id:
-        return 'Access denied', 403
+        return abort(403)
 
     restore_file(file_id)
     return redirect(url_for('trash'))
@@ -545,7 +545,7 @@ def permanent_delete(file_id):
         return redirect(url_for('trash'))
 
     if role != 'admin' and file['owner_id'] != user_id:
-        return 'Access denied', 403
+        return abort(403)
 
     file = delete_file(file_id)
 
@@ -569,13 +569,13 @@ def rename(file_id):
     role    = session['role']
 
     if file is None:
-        return 'File not found', 404
+        return abort(404)
 
     if file['is_deleted']:
-        return 'File not found', 404
+        return abort(404)
 
     if role != 'admin' and file['owner_id'] != user_id:
-        return 'Access denied', 403
+        return abort(403)
 
     new_name = request.form.get('name', '').strip()
 
@@ -652,10 +652,24 @@ def admin_view_user(user_id):
     user  = get_user_by_id(user_id)
 
     if user is None:
-        return 'User not found', 404
+        return abort(404)
 
     files = get_files_by_owner(user_id)
     return render_template('admin_view_user.html', user=user, files=files)
+
+
+@app.errorhandler(403)
+def forbidden(e):
+    return render_template('403.html'), 403
+
+@app.errorhandler(404)
+def not_found(e):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def server_error(e):
+    return render_template('500.html'), 500
+
 
 
 if __name__ == '__main__':
