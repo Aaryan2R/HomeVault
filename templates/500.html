@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>" />
+        <title>HomeVault - Server Error</title>
+        <link rel="stylesheet" href="/static/css/style.css" />
+        <script>
+            var saved = localStorage.getItem('homevault-theme');
+            if (saved === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        </script>
+    </head>
+    <body>
+        <div class="auth-page">
+            <div class="auth-container">
+                <div class="auth-brand">
+                    <div class="brand-icon">&#127968;</div>
+                    <h1>HomeVault</h1>
+                </div>
+
+                <div class="auth-box" style="text-align: center;">
+                    <div style="font-size: 72px; line-height: 1; font-weight: 700; color: var(--danger); margin-bottom: 8px;">500</div>
+                    <div style="font-size: 36px; margin-bottom: 12px;">&#128565;</div>
+                    <h2>Server Error</h2>
+                    <p class="auth-subtitle" style="margin-top: 8px;">
+                        Something went wrong on our end. Try again in a moment.
+                    </p>
+                    <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 24px;">
+                        <a href="/" class="btn btn-primary">&#8592; Go Home</a>
+                        <a href="javascript:history.back()" class="btn btn-ghost">Go Back</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
