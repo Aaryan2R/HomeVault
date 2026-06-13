@@ -7,7 +7,7 @@ no monthly fees, no data leaving your house.
 Built as a BCA final year project using Python, Flask, SQLite, Nginx, and a
 Windows launcher.
 
-[![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)](https://github.com/Aaryan2R/HomeVault/releases)
+[![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)](https://github.com/Aaryan2R/HomeVault/releases)
 [![Python](https://img.shields.io/badge/python-3.10+-green.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)]()
@@ -35,19 +35,18 @@ Inspired by Google Drive and Google Photos, but runs entirely on your own hardwa
 | [v1.0.0](https://github.com/Aaryan2R/HomeVault/releases/tag/v1.0.0) | Stable | Full web app, multi-user, dark mode, file preview, sort, EXIF, admin panel, settings |
 | [v1.1.0-beta](https://github.com/Aaryan2R/HomeVault/releases/tag/v1.1.0-beta) | Beta | Everything in v1.0.0 + GUI launcher, system tray, one-click start/stop |
 | [v1.2.0](https://github.com/Aaryan2R/HomeVault/releases/tag/v1.2.0) | Installer Beta | Everything in v1.1.0 + Windows installer, auto dependency detection |
+| [v1.3.0](https://github.com/Aaryan2R/HomeVault/releases/tag/v1.3.0) | Stable | Everything in v1.2.0 + production server, pagination, CSRF protection |
 
 ---
 
-## What's New in v1.2.0
+## What's New in v1.3.0
 
-- **Windows Installer** — `HomeVault_Setup.exe` built with Inno Setup
-- **Auto dependency detection** — detects existing Python, Nginx, Bonjour and skips reinstall
-- **Isolated venv** — installs HomeVault's packages separately, never touches developer's existing Python
-- **Silent dependency install** — Python, Nginx, Bonjour installed automatically with no popups
-- **Automatic firewall rules** — opens ports 80 and 5000 during install
-- **Hosts file update** — adds `homevault.local` automatically on the host PC
-- **Clean uninstaller** — removes firewall rules, registry entries, and all generated files
-- **Repo-local ip_watcher.py** — installer no longer depends on `C:\nginx` existing first
+- **Production server** — Flask dev server replaced with Waitress, no more dev server warning
+- **Pagination** — 50 files per page with Previous/Next and numbered page controls, all filters preserved
+- **CSRF protection** — Flask-WTF CSRFProtect added across every form and upload/rename request
+- **Custom error pages** — friendly 404, 403, and 500 pages (community contribution)
+- **Mobile UI fixes** — resolved layout edge cases on small screens
+- **Test suite** — initial Python test coverage for core functions (community contribution)
 
 ---
 
@@ -65,6 +64,7 @@ Inspired by Google Drive and Google Photos, but runs entirely on your own hardwa
 - Grid and list view toggle
 - Sort by date, name, size, or actual photo date (EXIF metadata)
 - Files grouped by date — Today, Yesterday, This Week, Month Year
+- Pagination — 50 files per page, fast even with large collections
 
 ### File Management
 - Trash system with soft delete, restore, and permanent delete
@@ -104,10 +104,12 @@ Inspired by Google Drive and Google Photos, but runs entirely on your own hardwa
 ### Security
 - Passwords hashed with Werkzeug — never stored as plain text
 - Secret key stored in `.env` — never hardcoded in source
+- CSRF protection on every form and upload/rename request
 - File access permission-checked on every route
 - Trashed files fully blocked from download, preview, and share
 - All state-changing actions use POST requests
 - Debug mode disabled by default
+- Custom error pages for 404, 403, and 500 — no stack traces shown to users
 
 ---
 
@@ -115,11 +117,11 @@ Inspired by Google Drive and Google Photos, but runs entirely on your own hardwa
 
 | Layer | Technology |
 |-------|-----------|
-| Backend | Python 3, Flask |
+| Backend | Python 3, Flask, Waitress |
 | Database | SQLite |
 | Frontend | HTML, CSS, Jinja2, JavaScript |
 | Images | Pillow |
-| Auth | Flask sessions, Werkzeug hashing |
+| Auth | Flask sessions, Werkzeug hashing, Flask-WTF (CSRF) |
 | Network | Nginx, Zeroconf/mDNS |
 | Config | python-dotenv |
 | Launcher | tkinter, pystray, PyInstaller |
@@ -138,11 +140,14 @@ Inspired by Google Drive and Google Photos, but runs entirely on your own hardwa
 5. Access from any device on your WiFi at `http://homevault.local`
 
 The installer handles everything automatically:
-- Installs Python if not present (isolated, does not affect existing Python)
 - Extracts and configures Nginx
 - Installs Bonjour for `homevault.local` support
 - Sets Windows firewall rules
 - Creates desktop shortcut and Start Menu entry
+
+If upgrading from an older version, the installer detects the existing
+installation and updates files in place. Your `.env`, database, and
+uploaded files are preserved.
 
 ### Option B — Manual Setup (Developers)
 
@@ -187,14 +192,12 @@ Download from https://support.apple.com/kb/DL999 and install.
 
 ## Testing
 
-This project uses `pytest` to ensure code stability. To run the full test suite and verify the application logic, use the following commands:
+This project uses `pytest` for core function tests.
 
 ```powershell
-# Activate your virtual environment
 .\venv\Scripts\Activate.ps1
-
-# Run all tests
 pytest
+```
 
 ---
 
@@ -219,7 +222,7 @@ Direct IP fallback:  http://192.168.x.x
 
 ```text
 HomeVault/
-|-- app.py                  # Main Flask app — all routes and logic
+|-- app.py                  # Main Flask app - all routes and logic
 |-- database.py             # SQLite helper functions
 |-- thumbnailer.py          # Image thumbnail generation
 |-- launcher.py             # Windows GUI launcher and system tray
@@ -243,6 +246,7 @@ HomeVault/
 ```powershell
 .\venv\Scripts\Activate.ps1
 pyinstaller --onedir --name HomeVault --noconsole --uac-admin `
+  --icon "static\icon.ico" `
   --add-data "templates;templates" `
   --add-data "static;static" `
   --add-data ".env;." `
@@ -257,6 +261,8 @@ pyinstaller --onedir --name HomeVault --noconsole --uac-admin `
   --hidden-import=flask --hidden-import=tkinter `
   --hidden-import=app --hidden-import=database `
   --hidden-import=thumbnailer `
+  --hidden-import=waitress `
+  --hidden-import=flask_wtf `
   --noconfirm launcher.py
 ```
 
@@ -266,9 +272,9 @@ Place these files in `installer_assets/` first:
 
 ```text
 installer_assets/
-|-- python-installer.exe   (Python 3.x Windows 64-bit installer)
-|-- nginx.zip              (Nginx Windows stable zip)
-`-- Bonjour64.exe          (Bonjour for Windows)
+|-- python-3.13.13-embed-amd64.zip   (embedded Python runtime)
+|-- nginx.zip                        (Nginx Windows stable zip)
+`-- Bonjour64.exe or .msi            (Bonjour for Windows)
 ```
 
 Then compile:
@@ -283,30 +289,22 @@ Output: `installer_output\HomeVault_Setup.exe`
 
 ## Known Limitations
 
-- Installer beta — needs testing on a clean Windows VM before final release
-- `homevault.local` resolution depends on Bonjour and browser — use direct IP as fallback
-- No HTTPS on local network (browser shows Not Secure) — Cloudflare tunnel planned for v1.3
-- CSRF protection not yet implemented — low priority for local-only use
+- `homevault.local` resolution depends on Bonjour and browser - use direct IP as fallback
+- No HTTPS on local network (browser shows Not Secure) - planned for v1.4
 
 ---
 
 ## Roadmap
 
-### v1.3 — Remote Access
-- [ ] Cloudflare Tunnel integration — access HomeVault from anywhere for free
-- [ ] Automatic subdomain allocation
-- [ ] HTTPS via Cloudflare — removes the Not Secure browser warning
-
-### v1.4 — Features
+### v1.4 — Remote Access and Features
+- [ ] Cloudflare Tunnel integration - access HomeVault from anywhere for free
+- [ ] Support HTTPS via self-signed certificate for local network
 - [ ] Google Photos style masonry grid for photo display
 - [ ] User-created folders for custom file organisation
-- [ ] File sharing via generated links
-- [ ] Encrypted personal vault per user
-- [ ] Production WSGI server (Waitress)
-- [ ] CSRF protection
 
 ### Future
-- [ ] Android companion app — automatic photo and video backup
+- [ ] Add file type icons for more formats
+- [ ] Android companion app - automatic photo and video backup
 - [ ] Linux support (Ubuntu, Raspberry Pi)
 - [ ] Full-text search inside document contents
 - [ ] Real-time notifications when files are shared
@@ -319,11 +317,7 @@ HomeVault is open source and welcomes contributions.
 
 ### Good First Issues
 
-- Fix mobile UI edge cases
 - Add file type icons for more formats
-- Improve error pages (404, 403, 500)
-- Add pagination for large file collections
-- Write Python tests for core functions
 
 ### How to Contribute
 
