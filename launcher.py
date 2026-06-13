@@ -208,11 +208,13 @@ def start_flask(cb):
                 flask_app.ensure_folders()
                 flask_app.init_db()
                 flask_app.upgrade_db()
-                flask_app.app.run(
+                
+                from waitress import serve
+                serve(
+                    flask_app.app,
                     host='0.0.0.0',
-                    debug=False,
-                    threaded=True,
-                    use_reloader=False
+                    port=5000,
+                    threads=8,
                 )
             except Exception as e:
                 write_debug(f'Flask thread error: {e}')
@@ -457,7 +459,7 @@ class LauncherApp:
         ).pack(side='left', padx=20, pady=16)
         tk.Label(
             hdr,
-            text='v1.2',
+            text='v1.3.0',
             bg=self.BLUE,
             fg='#93c5fd',
             font=('Segoe UI', 10)
@@ -628,3 +630,4 @@ if __name__ == '__main__':
     check_single_instance()
     app = LauncherApp()
     app.start()
+

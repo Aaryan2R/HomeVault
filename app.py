@@ -10,7 +10,9 @@ from thumbnailer import generate_thumbnail
 from datetime import datetime, timedelta
 from functools import wraps
 from dotenv import load_dotenv
+from flask_wtf.csrf import CSRFProtect
 import os
+import traceback
 import uuid
 import mimetypes
 from werkzeug.utils import secure_filename
@@ -23,8 +25,10 @@ app = Flask(__name__)
 # If it is missing, make a random one for now.
 # That works for local testing, but sessions reset after restart.
 app.secret_key = os.environ.get('SECRET_KEY') or os.urandom(24)
+csrf = CSRFProtect(app)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ERROR_LOG = os.path.join(BASE_DIR, 'error.log')
 app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, 'storage')
 app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024
 
@@ -293,6 +297,22 @@ def home():
         reverse = (sort == 'exif_desc')
         files   = sorted(files, key=exif_sort_key, reverse=reverse)
 
+    # Show 50 files at a time so large folders do not get too slow.
+    # Keep the full count for the heading before slicing the list.
+    PAGE_SIZE = 50
+    total_files_count = len(files)
+    total_pages = max(1, (total_files_count + PAGE_SIZE - 1) // PAGE_SIZE)
+
+    page = request.args.get('page', 1, type=int)
+    if page < 1:
+        page = 1
+    if page > total_pages:
+        page = total_pages
+
+    start = (page - 1) * PAGE_SIZE
+    end   = start + PAGE_SIZE
+    files = files[start:end]
+
     # In normal view the right panel shows only this user's stats.
     # In all-files view the admin can see overall stats.
     if view == 'mine' or role != 'admin':
@@ -313,7 +333,10 @@ def home():
                            sort=sort,
                            stats=stats,
                            my_count=my_count,
-                           trash_count=trash_count)
+                           trash_count=trash_count,
+                           page=page,
+                           total_pages=total_pages,
+                           total_files_count=total_files_count)
 
 
 @app.route('/upload', methods=['POST'])
@@ -666,6 +689,23 @@ def forbidden(e):
 def not_found(e):
     return render_template('404.html'), 404
 
+
+@app.errorhandler(Exception)
+def handle_all_exceptions(e):
+    # Keep normal errors like 404 and CSRF errors unchanged.
+    from werkzeug.exceptions import HTTPException
+    if isinstance(e, HTTPException):
+        return e
+
+    # Save the real error because debug mode is off in the exe.
+    with open(ERROR_LOG, 'a', encoding='utf-8') as f:
+        f.write(f'\n{datetime.now()} - Unhandled exception:\n')
+        f.write(traceback.format_exc())
+        f.write('\n')
+
+    return render_template('500.html'), 500
+
+
 @app.errorhandler(500)
 def server_error(e):
     return render_template('500.html'), 500
@@ -678,5 +718,5 @@ if __name__ == '__main__':
     upgrade_db()
     # Read debug mode from .env.
     # Keep it off by default.
-    debug_mode = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
-    app.run(host='0.0.0.0', debug=debug_mode, threaded=True)
+    from waitress import serve
+    serve(app, host='0.0.0.0', port=5000, threads=8)

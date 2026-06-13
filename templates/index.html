@@ -109,15 +109,15 @@
     {# page heading #}
     <div class="page-header">
         {% if query %}
-            <h2>Search results for "{{ query }}" ({{ files|length }})</h2>
+            <h2>Search results for "{{ query }}" ({{ total_files_count }})</h2>
         {% elif folder %}
-            <h2>{{ folder }} ({{ files|length }})</h2>
+            <h2>{{ folder }} ({{ total_files_count }})</h2>
         {% elif view == 'shared' %}
-            <h2>Shared Files ({{ files|length }})</h2>
+            <h2>Shared Files ({{ total_files_count }})</h2>
         {% elif view == 'all' %}
-            <h2>All Files ({{ files|length }})</h2>
+            <h2>All Files ({{ total_files_count }})</h2>
         {% else %}
-            <h2>Recent Files ({{ files|length }})</h2>
+            <h2>Recent Files ({{ total_files_count }})</h2>
         {% endif %}
     </div>
 
@@ -204,6 +204,7 @@
 
                         {% if session['role'] == 'admin' or file['owner_id'] == session['user_id'] %}
                         <form action="/share/{{ file['id'] }}" method="POST" class="hidden-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="menu-item">
                                 <span class="menu-icon">&#128279;</span>
                                 {{ 'Unshare' if file['is_shared'] else 'Share' }}
@@ -214,6 +215,7 @@
 
                         <form action="/delete/{{ file['id'] }}" method="POST" class="hidden-form"
                               onsubmit="return confirmAction('Move this file to trash?')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="menu-item danger">
                                 <span class="menu-icon">&#128465;&#65039;</span>
                                 Move to Trash
@@ -226,6 +228,42 @@
             {% endfor %}
         </div>
         {% endfor %}
+
+        {# only show page buttons when they are needed #}
+        {% if total_pages > 1 %}
+        <div style="display:flex; align-items:center; justify-content:center;
+                    gap:6px; margin:24px 0; flex-wrap:wrap;">
+
+            {# previous page #}
+            {% if page > 1 %}
+            <a href="/?view={{ view }}&folder={{ folder }}&search={{ query }}&sort={{ sort }}&page={{ page - 1 }}"
+               class="btn btn-ghost" style="padding:6px 14px;">&larr; Prev</a>
+            {% else %}
+            <span class="btn btn-ghost" style="padding:6px 14px; opacity:0.4; cursor:default;">&larr; Prev</span>
+            {% endif %}
+
+            {# show nearby page numbers #}
+            {% for p in range(1, total_pages + 1) %}
+                {% if p == page %}
+                    <span class="btn btn-primary" style="padding:6px 12px; min-width:36px; text-align:center;">{{ p }}</span>
+                {% elif p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
+                    <a href="/?view={{ view }}&folder={{ folder }}&search={{ query }}&sort={{ sort }}&page={{ p }}"
+                       class="btn btn-ghost" style="padding:6px 12px; min-width:36px; text-align:center;">{{ p }}</a>
+                {% elif p == 2 or p == total_pages - 1 %}
+                    <span style="padding:6px 4px; color:var(--text-muted);">&hellip;</span>
+                {% endif %}
+            {% endfor %}
+
+            {# next page #}
+            {% if page < total_pages %}
+            <a href="/?view={{ view }}&folder={{ folder }}&search={{ query }}&sort={{ sort }}&page={{ page + 1 }}"
+               class="btn btn-ghost" style="padding:6px 14px;">Next &rarr;</a>
+            {% else %}
+            <span class="btn btn-ghost" style="padding:6px 14px; opacity:0.4; cursor:default;">Next &rarr;</span>
+            {% endif %}
+
+        </div>
+        {% endif %}
 
     {% else %}
     <div class="empty-state">
@@ -250,6 +288,7 @@
     <aside class="right-panel">
 
         <form id="upload-form" action="/upload" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="upload-zone" id="uploadZone">
                 <div class="upload-icon">&#11014;&#65039;</div>
                 <div class="upload-text">Drop files here or click to browse</div>

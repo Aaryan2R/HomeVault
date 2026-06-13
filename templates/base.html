@@ -119,6 +119,7 @@
                     </div>
 
                     <form action="/logout" method="POST" style="margin: 0;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="nav-link"
                                 style="color:#f87171; background:none; border:none;
                                        width:100%; text-align:left; cursor:pointer;

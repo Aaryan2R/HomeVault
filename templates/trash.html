@@ -12,6 +12,7 @@
 
     {% if files %}
     <form action="/empty_trash" method="POST" style="margin-bottom:16px;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit" class="btn btn-danger"
                 onclick="return confirmAction('Permanently delete ALL trashed files? This cannot be undone.')">
             &#128465;&#65039; Empty Trash ({{ files|length }} files)
@@ -63,6 +64,7 @@
                 <div class="menu-dropdown">
                     {# restore button #}
                     <form action="/restore/{{ file['id'] }}" method="POST" class="hidden-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="menu-item">
                             <span class="menu-icon">&#9851;&#65039;</span>
                             Restore
@@ -74,6 +76,7 @@
                     {# permanent delete button with confirm #}
                     <form action="/permanent_delete/{{ file['id'] }}" method="POST" class="hidden-form"
                           onsubmit="return confirmAction('This will PERMANENTLY delete the file. Are you sure?')">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="menu-item danger">
                             <span class="menu-icon">&#128128;</span>
                             Delete Forever

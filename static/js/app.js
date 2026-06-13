@@ -232,6 +232,7 @@ function uploadOneFile(file, isShared, progressList, onDone) {
     var formData = new FormData();
     formData.append('file', file);
     formData.append('is_shared', isShared ? 'on' : '');
+    formData.append('csrf_token', document.querySelector('input[name="csrf_token"]').value);
 
     var xhr = new XMLHttpRequest();
 
@@ -441,6 +442,7 @@ function makeFileNameEditable(nameEl, fileId) {
 
         var formData = new FormData();
         formData.append('name', newName);
+        formData.append('csrf_token', document.querySelector('input[name="csrf_token"]').value);
 
         fetch('/rename/' + fileId, {
             method: 'POST',

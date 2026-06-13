@@ -242,7 +242,7 @@ HomeVault/
 
 ```powershell
 .\venv\Scripts\Activate.ps1
-pyinstaller --onedir --name HomeVault --noconsole `
+pyinstaller --onedir --name HomeVault --noconsole --uac-admin `
   --add-data "templates;templates" `
   --add-data "static;static" `
   --add-data ".env;." `

@@ -73,6 +73,7 @@
                    margin-bottom:16px;">Change Password</h3>
 
         <form action="/settings/change_password" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-group">
                 <label>Current Password</label>
                 <input type="password" name="current_password"
